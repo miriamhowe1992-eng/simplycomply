@@ -13,7 +13,9 @@ import {
   ArrowRight,
   Calendar,
   TrendingUp,
-  Bell
+  Bell,
+  Users,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 
