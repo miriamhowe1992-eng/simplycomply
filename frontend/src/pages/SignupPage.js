@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Shield, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getIndustryById } from "../data/industries";
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
@@ -13,6 +14,10 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const [searchParams] = useSearchParams();
+  const preselectedIndustryId = searchParams.get("industry");
+  const preselectedIndustry = preselectedIndustryId ? getIndustryById(preselectedIndustryId) : null;
   
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -30,7 +35,12 @@ export default function SignupPage() {
     try {
       await signup(email, password, fullName);
       toast.success("Account created! Let's set up your business.");
-      navigate("/onboarding");
+      // Pass the preselected industry to onboarding
+      if (preselectedIndustryId) {
+        navigate(`/onboarding?industry=${preselectedIndustryId}`);
+      } else {
+        navigate("/onboarding");
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to create account");
     } finally {
@@ -51,9 +61,22 @@ export default function SignupPage() {
           <h1 className="font-heading text-3xl font-bold text-slate-900 mb-2">
             Create your account
           </h1>
-          <p className="text-slate-600 mb-8">
+          <p className="text-slate-600 mb-6">
             Start your compliance journey in minutes
           </p>
+          
+          {/* Show preselected industry */}
+          {preselectedIndustry && (
+            <div className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{preselectedIndustry.icon}</span>
+                <div>
+                  <p className="font-medium text-teal-900">{preselectedIndustry.name} Pack</p>
+                  <p className="text-sm text-teal-700">This will be pre-selected during setup</p>
+                </div>
+              </div>
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -153,6 +176,16 @@ export default function SignupPage() {
               <div>
                 <h3 className="text-white font-medium mb-1">Industry-Specific Packs</h3>
                 <p className="text-slate-400">Pre-built compliance documents for dental, healthcare, construction, hospitality, and more.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white font-medium mb-1">Employee Compliance Tracking</h3>
+                <p className="text-slate-400">Track DBS checks, certifications, and training for your entire team in one place.</p>
               </div>
             </div>
             
