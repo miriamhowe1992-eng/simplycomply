@@ -12,7 +12,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown
+  ChevronDown,
+  Users
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
