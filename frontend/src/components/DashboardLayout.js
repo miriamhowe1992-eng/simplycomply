@@ -28,6 +28,7 @@ const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/checklist", label: "Checklist", icon: CheckSquare },
   { path: "/documents", label: "Documents", icon: FileText },
+  { path: "/employees", label: "Employees", icon: Users },
   { path: "/subscription", label: "Subscription", icon: CreditCard },
 ];
 
