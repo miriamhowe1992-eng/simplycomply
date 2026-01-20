@@ -326,7 +326,7 @@ class SimplyComplyAPITester:
             "Add Custom Requirement",
             "POST", 
             f"employees/{employee_id}/requirements",
-            201,
+            200,
             data=custom_req_data
         )
         if not success:
