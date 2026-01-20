@@ -150,9 +150,9 @@ class SimplyComplyAPITester:
     def test_create_business(self):
         """Test business creation"""
         business_data = {
-            "name": "Test Dental Practice",
+            "name": "Test Veterinary Practice",
             "industry": "Healthcare",
-            "sector": "dental",
+            "sector": "veterinary",
             "size": "small",
             "uk_nation": "England",
             "address": "123 Test Street, London",
