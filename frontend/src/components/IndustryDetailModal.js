@@ -10,11 +10,18 @@ import {
   CheckCircle2, 
   Shield, 
   FileText, 
-  Building2, 
   ArrowRight,
   Users,
-  Scale
+  Scale,
+  Info,
+  ExternalLink
 } from "lucide-react";
+import { 
+  COMPLIANCE_AREAS, 
+  REGULATORY_BODIES,
+  getComplianceAreasForIndustry,
+  getRegulatoryBodiesForIndustry 
+} from "../data/industries";
 
 export function IndustryDetailModal({ industry, open, onClose }) {
   const navigate = useNavigate();
@@ -26,6 +33,9 @@ export function IndustryDetailModal({ industry, open, onClose }) {
     navigate(`/signup?industry=${industry.id}`);
   };
 
+  const complianceAreas = getComplianceAreasForIndustry(industry.id);
+  const regulatoryBodies = getRegulatoryBodiesForIndustry(industry.id);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -34,7 +44,7 @@ export function IndustryDetailModal({ industry, open, onClose }) {
             <span className="text-4xl">{industry.icon}</span>
             <div>
               <DialogTitle className="font-heading text-2xl">{industry.name}</DialogTitle>
-              <p className="text-sm text-slate-500">Regulated by {industry.regulator}</p>
+              <p className="text-sm text-slate-500">{industry.category}</p>
             </div>
           </div>
         </DialogHeader>
@@ -67,13 +77,28 @@ export function IndustryDetailModal({ industry, open, onClose }) {
           <section>
             <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
               <Scale className="w-5 h-5 text-teal-600" />
-              Regulatory Bodies Covered
+              Regulatory Bodies We Help You Prepare For
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {industry.regulatoryBodies.map((body, index) => (
+              {regulatoryBodies.map((body, index) => (
                 <div key={index} className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                  <div className="font-medium text-slate-900">{body.name}</div>
-                  <div className="text-xs text-slate-500">{body.full}</div>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-medium text-slate-900">{body.abbr}</div>
+                      <div className="text-xs text-slate-500">{body.full}</div>
+                    </div>
+                    {body.url && (
+                      <a 
+                        href={body.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-teal-600 hover:text-teal-700"
+                        title="Visit regulator website"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
                   <div className="text-sm text-slate-600 mt-1">{body.description}</div>
                 </div>
               ))}
@@ -84,10 +109,10 @@ export function IndustryDetailModal({ industry, open, onClose }) {
           <section>
             <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
               <Shield className="w-5 h-5 text-teal-600" />
-              Compliance Areas Included
+              Compliance Areas Covered
             </h3>
             <div className="flex flex-wrap gap-2">
-              {industry.complianceAreas.filter(area => area.included).map((area, index) => (
+              {complianceAreas.map((area, index) => (
                 <span 
                   key={index}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-700 rounded-full text-sm"
@@ -99,14 +124,14 @@ export function IndustryDetailModal({ industry, open, onClose }) {
             </div>
           </section>
 
-          {/* Typical Documents */}
+          {/* Example Documents */}
           <section>
             <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
               <FileText className="w-5 h-5 text-teal-600" />
-              Example Documents Included
+              Example Documents & Templates
             </h3>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {industry.typicalDocuments.map((doc, index) => (
+              {industry.exampleDocuments.map((doc, index) => (
                 <li key={index} className="flex items-start gap-2 text-slate-600 text-sm">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   {doc}
@@ -115,13 +140,26 @@ export function IndustryDetailModal({ industry, open, onClose }) {
             </ul>
           </section>
 
+          {/* Industry Disclaimer */}
+          <section className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+            <div className="flex gap-3">
+              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-blue-900 text-sm mb-1">Important Information</h4>
+                <p className="text-sm text-blue-800 leading-relaxed">
+                  {industry.industryDisclaimer}
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* CTA */}
           <section className="bg-slate-900 rounded-xl p-6 text-center">
             <h3 className="font-heading text-xl font-semibold text-white mb-2">
-              Ready to get compliant?
+              Ready to simplify your compliance?
             </h3>
             <p className="text-slate-300 text-sm mb-4">
-              Get instant access to all {industry.name.toLowerCase()} compliance documents and checklists.
+              Get instant access to all {industry.name.toLowerCase()} policies, templates, and guidance.
             </p>
             <Button 
               onClick={handleGetStarted}
@@ -131,6 +169,9 @@ export function IndustryDetailModal({ industry, open, onClose }) {
               Get this compliance pack
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
+            <p className="text-xs text-slate-400 mt-3">
+              We help you understand and prepare — you maintain control of your compliance journey.
+            </p>
           </section>
         </div>
       </DialogContent>
