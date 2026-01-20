@@ -1,5 +1,7 @@
 # SimplyComply - UK Business Compliance Platform
 
+**Last Updated:** January 2025
+
 ## Original Problem Statement
 Create a UK-based SaaS web platform called SimplyComply that allows UK businesses to sign up, select their business type and industry, and instantly access all required compliance policies, procedures, templates, and guidance relevant to their sector.
 
