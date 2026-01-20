@@ -240,6 +240,131 @@ class SimplyComplyAPITester:
         
         return success, notifications
 
+    def test_employee_operations(self):
+        """Test comprehensive employee operations"""
+        self.log("\n👥 Testing Employee Management...")
+        
+        # Test getting employee requirement types first
+        success, req_types = self.run_test("Get Employee Requirement Types", "GET", "employees/requirements/types", 200)
+        if not success:
+            return False, "Failed to get requirement types"
+        
+        # Test getting employees (should be empty initially)
+        success, employees = self.run_test("Get Employees List", "GET", "employees", 200)
+        if not success:
+            return False, "Failed to get employees list"
+        
+        # Test compliance overview (should work even with no employees)
+        success, overview = self.run_test("Get Compliance Overview", "GET", "employees/compliance/overview", 200)
+        if not success:
+            return False, "Failed to get compliance overview"
+        
+        # Create a test employee
+        employee_data = {
+            "first_name": "John",
+            "last_name": "Smith", 
+            "email": "john.smith@testvet.com",
+            "job_title": "Veterinary Surgeon",
+            "department": "Clinical",
+            "start_date": "2024-01-15",
+            "phone": "07123456789",
+            "emergency_contact": "Jane Smith - 07987654321"
+        }
+        
+        success, employee = self.run_test("Create Employee", "POST", "employees", 201, data=employee_data)
+        if not success:
+            return False, "Failed to create employee"
+        
+        employee_id = employee.get('id')
+        if not employee_id:
+            return False, "Employee created but no ID returned"
+        
+        self.log(f"   Employee created with ID: {employee_id}")
+        
+        # Test getting specific employee
+        success, emp_detail = self.run_test("Get Employee Detail", "GET", f"employees/{employee_id}", 200)
+        if not success:
+            return False, "Failed to get employee detail"
+        
+        # Test getting employee requirements (should be auto-generated for veterinary sector)
+        success, requirements = self.run_test("Get Employee Requirements", "GET", f"employees/{employee_id}/requirements", 200)
+        if not success:
+            return False, "Failed to get employee requirements"
+        
+        self.log(f"   Employee has {len(requirements)} auto-generated requirements")
+        
+        # Test updating an employee requirement if any exist
+        if requirements:
+            req_id = requirements[0]['id']
+            update_data = {
+                "issue_date": "2024-01-20",
+                "expiry_date": "2027-01-20", 
+                "reference_number": "DBS-123456789"
+            }
+            
+            success, updated_req = self.run_test(
+                "Update Employee Requirement", 
+                "PUT", 
+                f"employees/{employee_id}/requirements/{req_id}", 
+                200, 
+                data=update_data
+            )
+            if not success:
+                return False, "Failed to update employee requirement"
+        
+        # Test adding a custom requirement
+        custom_req_data = {
+            "requirement_type": "other",
+            "title": "Custom Training Certificate",
+            "description": "Special veterinary training",
+            "issue_date": "2024-02-01",
+            "expiry_date": "2025-02-01",
+            "reference_number": "TRAIN-001"
+        }
+        
+        success, new_req = self.run_test(
+            "Add Custom Requirement",
+            "POST", 
+            f"employees/{employee_id}/requirements",
+            201,
+            data=custom_req_data
+        )
+        if not success:
+            return False, "Failed to add custom requirement"
+        
+        # Test updating employee details
+        update_emp_data = {
+            "phone": "07111222333",
+            "department": "Surgery"
+        }
+        
+        success, updated_emp = self.run_test(
+            "Update Employee",
+            "PUT",
+            f"employees/{employee_id}",
+            200,
+            data=update_emp_data
+        )
+        if not success:
+            return False, "Failed to update employee"
+        
+        # Test getting updated compliance overview
+        success, updated_overview = self.run_test("Get Updated Compliance Overview", "GET", "employees/compliance/overview", 200)
+        if not success:
+            return False, "Failed to get updated compliance overview"
+        
+        # Test getting updated employees list
+        success, updated_employees = self.run_test("Get Updated Employees List", "GET", "employees", 200)
+        if not success:
+            return False, "Failed to get updated employees list"
+        
+        # Test deleting employee (cleanup)
+        success, _ = self.run_test("Delete Employee", "DELETE", f"employees/{employee_id}", 200)
+        if not success:
+            self.log("   Warning: Failed to delete test employee (cleanup)")
+        
+        return True, "All employee operations completed successfully"
+
     def run_comprehensive_test(self):
         """Run all tests in sequence"""
         self.log("🚀 Starting SimplyComply API Tests")
