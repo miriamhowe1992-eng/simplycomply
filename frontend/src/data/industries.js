@@ -1,108 +1,196 @@
-// Single source of truth for all UK business sectors/industries
-// Used by: Landing page, Signup flow, Onboarding, Backend sync
+// SimplyComply UK Industries - Single Source of Truth
+// This file is the central data model for all industry-related content
+// Changes here automatically update: Homepage, View All, Detail Modals, Signup, Onboarding
+
+// ==================== COMPLIANCE AREAS DEFINITIONS ====================
+// Only include compliance areas that are genuinely relevant to each industry
+
+export const COMPLIANCE_AREAS = {
+  health_safety: { id: "health_safety", name: "Health & Safety", icon: "🛡️" },
+  gdpr: { id: "gdpr", name: "GDPR & Data Protection", icon: "🔒" },
+  equality: { id: "equality", name: "Equality & Diversity", icon: "⚖️" },
+  safeguarding: { id: "safeguarding", name: "Safeguarding", icon: "👥" },
+  complaints: { id: "complaints", name: "Complaints Procedures", icon: "📝" },
+  risk_assessment: { id: "risk_assessment", name: "Risk Assessments", icon: "📋" },
+  staff_handbook: { id: "staff_handbook", name: "Staff Handbook", icon: "📖" },
+  mandatory_posters: { id: "mandatory_posters", name: "Mandatory Posters & Notices", icon: "📌" },
+  infection_control: { id: "infection_control", name: "Infection Control", icon: "🧴" },
+  food_safety: { id: "food_safety", name: "Food Safety", icon: "🍽️" },
+  fire_safety: { id: "fire_safety", name: "Fire Safety", icon: "🔥" },
+  coshh: { id: "coshh", name: "COSHH (Chemical Safety)", icon: "⚗️" },
+  manual_handling: { id: "manual_handling", name: "Manual Handling", icon: "📦" },
+  medication: { id: "medication", name: "Medication Management", icon: "💊" },
+  controlled_drugs: { id: "controlled_drugs", name: "Controlled Drugs", icon: "💉" },
+  dbs_checks: { id: "dbs_checks", name: "DBS & Vetting", icon: "✅" },
+  insurance: { id: "insurance", name: "Insurance Requirements", icon: "📄" },
+  licensing: { id: "licensing", name: "Licensing & Registration", icon: "🏷️" },
+  environmental: { id: "environmental", name: "Environmental", icon: "🌱" },
+  client_care: { id: "client_care", name: "Client Care & Consent", icon: "🤝" },
+};
+
+// ==================== REGULATORY BODIES ====================
+
+export const REGULATORY_BODIES = {
+  CQC: { 
+    abbr: "CQC", 
+    full: "Care Quality Commission", 
+    description: "Regulates health and social care services in England",
+    url: "https://www.cqc.org.uk"
+  },
+  GDC: { 
+    abbr: "GDC", 
+    full: "General Dental Council", 
+    description: "Professional regulator for dental professionals",
+    url: "https://www.gdc-uk.org"
+  },
+  HSE: { 
+    abbr: "HSE", 
+    full: "Health and Safety Executive", 
+    description: "Workplace health, safety and welfare regulator",
+    url: "https://www.hse.gov.uk"
+  },
+  ICO: { 
+    abbr: "ICO", 
+    full: "Information Commissioner's Office", 
+    description: "UK data protection and privacy regulator",
+    url: "https://ico.org.uk"
+  },
+  RCVS: { 
+    abbr: "RCVS", 
+    full: "Royal College of Veterinary Surgeons", 
+    description: "Regulates veterinary surgeons and veterinary nurses",
+    url: "https://www.rcvs.org.uk"
+  },
+  GPhC: { 
+    abbr: "GPhC", 
+    full: "General Pharmaceutical Council", 
+    description: "Regulates pharmacists, pharmacy technicians and pharmacies",
+    url: "https://www.pharmacyregulation.org"
+  },
+  Ofsted: { 
+    abbr: "Ofsted", 
+    full: "Office for Standards in Education", 
+    description: "Inspects and regulates education and childcare",
+    url: "https://www.gov.uk/government/organisations/ofsted"
+  },
+  EHO: { 
+    abbr: "EHO", 
+    full: "Environmental Health Office", 
+    description: "Local authority enforcement of hygiene and safety standards",
+    url: null
+  },
+  FSA: { 
+    abbr: "FSA", 
+    full: "Food Standards Agency", 
+    description: "Responsible for food safety and food hygiene",
+    url: "https://www.food.gov.uk"
+  },
+  SIA: { 
+    abbr: "SIA", 
+    full: "Security Industry Authority", 
+    description: "Regulates the private security industry",
+    url: "https://www.sia.homeoffice.gov.uk"
+  },
+  NICEIC: { 
+    abbr: "NICEIC", 
+    full: "National Inspection Council for Electrical Installation Contracting", 
+    description: "Electrical contractor competence scheme",
+    url: "https://www.niceic.com"
+  },
+  GasSafe: { 
+    abbr: "Gas Safe", 
+    full: "Gas Safe Register", 
+    description: "Official list of gas engineers legally allowed to work on gas",
+    url: "https://www.gassaferegister.co.uk"
+  },
+  TradingStandards: { 
+    abbr: "Trading Standards", 
+    full: "Trading Standards", 
+    description: "Consumer protection and fair trading enforcement",
+    url: null
+  },
+  CharityCommission: { 
+    abbr: "Charity Commission", 
+    full: "Charity Commission for England and Wales", 
+    description: "Regulator and registrar for charities",
+    url: "https://www.gov.uk/government/organisations/charity-commission"
+  },
+};
+
+// ==================== INDUSTRIES DATA ====================
 
 export const UK_INDUSTRIES = [
+  // ========== HEALTHCARE ==========
   {
     id: "dental",
     name: "Dental Practice",
-    industry: "Healthcare",
+    category: "Healthcare",
     icon: "🦷",
-    regulator: "CQC",
-    shortDescription: "Private and NHS dental practices, orthodontists, and dental laboratories",
-    description: "Complete compliance pack for dental practices in the UK. Whether you're running an NHS practice, private clinic, or specialist dental service, we cover all regulatory requirements from the Care Quality Commission (CQC) and General Dental Council (GDC).",
+    regulators: ["CQC", "GDC", "HSE", "ICO"],
+    shortDescription: "Private and NHS dental practices, orthodontists, and dental hygienists",
+    description: "Our dental practice compliance pack helps you meet the requirements of the Care Quality Commission (CQC) and General Dental Council (GDC). We provide the policies, procedures and guidance you need to demonstrate compliance with the fundamental standards of care.",
     whoIsItFor: [
-      "NHS and private dental practices",
-      "Orthodontic clinics",
-      "Dental laboratories",
-      "Mobile dental services",
-      "Dental hygienist practices"
+      "NHS dental practices",
+      "Private dental clinics",
+      "Orthodontic practices",
+      "Dental hygienist practices",
+      "Domiciliary dental services"
     ],
-    regulatoryBodies: [
-      { name: "CQC", full: "Care Quality Commission", description: "Healthcare regulator for dental services" },
-      { name: "GDC", full: "General Dental Council", description: "Professional standards for dental professionals" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace health and safety" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Data protection compliance" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Safeguarding", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Mandatory Posters", included: true },
-      { name: "Infection Control", included: true },
-      { name: "CQC Registration", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "equality", "safeguarding", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "infection_control", "dbs_checks"],
+    exampleDocuments: [
       "Health & Safety Policy",
       "Infection Control Policy (HTM 01-05)",
-      "GDPR Patient Data Policy",
-      "Safeguarding Policy",
-      "Complaints Procedure",
-      "Clinical Risk Assessment",
+      "Safeguarding Adults & Children Policy",
+      "GDPR Patient Privacy Notice",
+      "Complaints Handling Procedure",
       "Sharps & Needlestick Protocol",
-      "Fire Safety Policy",
-      "Staff Handbook",
-      "GDC Standards Guidance"
+      "Radiation Protection Policy",
+      "Medical Emergency Procedures",
+      "Staff Induction Checklist",
+      "CQC Statement of Purpose"
     ],
+    industryDisclaimer: "Dental practices must be registered with the CQC. Individual practitioners must maintain their GDC registration. This pack supports your compliance journey but does not replace professional registration requirements.",
     featured: true
   },
   {
     id: "healthcare",
     name: "Healthcare Provider",
-    industry: "Healthcare",
+    category: "Healthcare",
     icon: "🏥",
-    regulator: "CQC",
-    shortDescription: "GP surgeries, clinics, nursing services, and healthcare providers",
-    description: "Comprehensive compliance framework for healthcare providers regulated by the Care Quality Commission. From GP practices to specialist clinics, we ensure you meet all five CQC key questions: Safe, Effective, Caring, Responsive, and Well-led.",
+    regulators: ["CQC", "HSE", "ICO"],
+    shortDescription: "GP surgeries, clinics, nursing services, and independent healthcare providers",
+    description: "Comprehensive compliance support for healthcare providers regulated by the Care Quality Commission. Our pack covers the five key questions: Safe, Effective, Caring, Responsive, and Well-led, helping you prepare for inspections with confidence.",
     whoIsItFor: [
-      "GP surgeries and primary care",
-      "Private clinics and hospitals",
+      "GP surgeries",
+      "Private clinics",
       "Community nursing services",
-      "Diagnostic services",
+      "Diagnostic centres",
       "Home healthcare providers"
     ],
-    regulatoryBodies: [
-      { name: "CQC", full: "Care Quality Commission", description: "Main healthcare regulator" },
-      { name: "NHS England", full: "NHS England", description: "NHS service standards" },
-      { name: "GMC/NMC", full: "General Medical/Nursing Council", description: "Professional registration" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Patient data protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Safeguarding", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Mandatory Posters", included: true },
-      { name: "Infection Control", included: true },
-      { name: "Mental Capacity & DoLS", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "equality", "safeguarding", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "infection_control", "medication", "dbs_checks"],
+    exampleDocuments: [
       "Health & Safety Policy",
-      "Data Protection Policy (Caldicott)",
-      "Safeguarding Adults & Children Policy",
+      "Safeguarding Policy (Adults & Children)",
       "Infection Prevention & Control Policy",
-      "Complaints Policy (NHS Standards)",
-      "Clinical Risk Assessment Framework",
-      "Mental Capacity & DoLS Policy",
-      "Staff Handbook",
-      "CQC Key Lines of Enquiry Guide"
+      "Medicines Management Policy",
+      "Information Governance Policy",
+      "Complaints Procedure",
+      "Clinical Risk Assessment",
+      "Consent Policy",
+      "Duty of Candour Policy",
+      "Staff Training Matrix"
     ],
+    industryDisclaimer: "Healthcare providers must be registered with the CQC for regulated activities. Clinical staff must maintain appropriate professional registration. This pack supports your compliance but does not replace regulatory requirements.",
     featured: true
   },
   {
     id: "care_home",
     name: "Care Home",
-    industry: "Healthcare",
+    category: "Healthcare",
     icon: "🏡",
-    regulator: "CQC",
-    shortDescription: "Residential care homes, nursing homes, and supported living",
-    description: "Everything you need to run a compliant care home in the UK. Our pack covers residential care, nursing homes, and supported living services, ensuring you meet CQC fundamental standards and provide outstanding care.",
+    regulators: ["CQC", "HSE", "ICO"],
+    shortDescription: "Residential care homes, nursing homes, and supported living services",
+    description: "Everything you need to run a compliant care home. Our pack covers CQC fundamental standards, helping you provide outstanding care while meeting your regulatory obligations. Includes guidance on the Care Act 2014 and Mental Capacity Act.",
     whoIsItFor: [
       "Residential care homes",
       "Nursing homes",
@@ -110,136 +198,158 @@ export const UK_INDUSTRIES = [
       "Dementia care specialists",
       "Respite care providers"
     ],
-    regulatoryBodies: [
-      { name: "CQC", full: "Care Quality Commission", description: "Adult social care regulator" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Resident data protection" },
-      { name: "Local Authority", full: "Local Authority", description: "Safeguarding partnerships" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Safeguarding Adults", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Mandatory Posters", included: true },
-      { name: "Medication Management", included: true },
-      { name: "Mental Capacity & DoLS", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
+    complianceAreas: ["health_safety", "gdpr", "equality", "safeguarding", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "infection_control", "medication", "manual_handling", "dbs_checks"],
+    exampleDocuments: [
       "Safeguarding Adults Policy",
-      "Medication Management Policy",
+      "Mental Capacity & DoLS Policy",
+      "Medication Administration Policy",
       "Falls Prevention Policy",
-      "DoLS & Mental Capacity Policy",
-      "Moving & Handling Risk Assessment",
+      "Moving & Handling Policy",
+      "Infection Control Policy",
       "Complaints Procedure",
-      "Care Worker Handbook",
-      "CQC Single Assessment Framework Guide"
+      "Care Plan Templates",
+      "Staff Supervision Policy",
+      "Resident Privacy Notice"
     ],
+    industryDisclaimer: "Care homes must be registered with the CQC. This pack supports your compliance journey and inspection preparation but does not guarantee CQC registration or ratings.",
     featured: true
   },
   {
     id: "veterinary",
     name: "Veterinary Practice",
-    industry: "Healthcare",
+    category: "Healthcare",
     icon: "🐾",
-    regulator: "RCVS",
+    regulators: ["RCVS", "HSE", "ICO"],
     shortDescription: "Veterinary surgeries, animal hospitals, and pet clinics",
-    description: "Complete compliance pack for veterinary practices, from small animal clinics to equine hospitals. We cover RCVS Practice Standards Scheme requirements and ensure your practice meets all professional and legal obligations.",
+    description: "Complete compliance support for veterinary practices. We help you meet RCVS Practice Standards Scheme requirements and workplace health and safety obligations, so you can focus on animal care.",
     whoIsItFor: [
-      "Small animal veterinary practices",
+      "Small animal practices",
       "Equine veterinary services",
       "Farm animal practices",
       "Emergency veterinary hospitals",
       "Mobile veterinary services"
     ],
-    regulatoryBodies: [
-      { name: "RCVS", full: "Royal College of Veterinary Surgeons", description: "Professional regulator" },
-      { name: "VMD", full: "Veterinary Medicines Directorate", description: "Medicines regulation" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Client data protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Controlled Drugs", included: true },
-      { name: "Radiation Protection", included: true },
-      { name: "Infection Control", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "infection_control", "controlled_drugs", "coshh"],
+    exampleDocuments: [
       "Health & Safety Policy",
       "RCVS Practice Standards Guide",
       "Controlled Drugs Policy",
-      "Radiation Protection Policy",
-      "Clinical Risk Assessment",
-      "Infection Control & Biosecurity",
-      "Client Data Protection Policy",
-      "Complaints Procedure",
-      "Staff Handbook"
+      "Infection Control & Biosecurity Policy",
+      "Radiation Protection (X-ray) Policy",
+      "Client Complaints Procedure",
+      "Clinical Waste Management",
+      "Staff Handbook",
+      "GDPR Client Privacy Notice",
+      "Emergency Procedures"
     ],
+    industryDisclaimer: "Veterinary practices should consider RCVS Practice Standards Scheme accreditation. Individual vets and nurses must maintain RCVS registration. This pack supports your compliance but does not replace professional requirements.",
     featured: true
   },
+  {
+    id: "pharmacy",
+    name: "Pharmacy",
+    category: "Healthcare",
+    icon: "💊",
+    regulators: ["GPhC", "HSE", "ICO"],
+    shortDescription: "Community pharmacies, dispensing chemists, and pharmacy services",
+    description: "Compliance support for community pharmacies, helping you meet General Pharmaceutical Council standards. Our pack covers medicines management, patient safety, and professional standards.",
+    whoIsItFor: [
+      "Community pharmacies",
+      "Dispensing practices",
+      "Hospital pharmacy services",
+      "Online pharmacies",
+      "Pharmacy chains"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "controlled_drugs", "medication"],
+    exampleDocuments: [
+      "Standard Operating Procedures",
+      "Controlled Drugs Policy",
+      "Dispensing Error Procedure",
+      "Patient Group Directions",
+      "Complaints Procedure",
+      "Information Governance Policy",
+      "Responsible Pharmacist Procedures",
+      "Staff Training Records",
+      "Near Miss Recording",
+      "Emergency Supply Procedures"
+    ],
+    industryDisclaimer: "Pharmacies must be registered with the GPhC. Pharmacists and pharmacy technicians must maintain individual GPhC registration. This pack supports your compliance but does not replace professional registration.",
+    featured: false
+  },
+
+  // ========== EDUCATION ==========
   {
     id: "nursery",
     name: "Nursery & Childcare",
-    industry: "Education",
+    category: "Education",
     icon: "👶",
-    regulator: "Ofsted",
+    regulators: ["Ofsted", "HSE", "ICO"],
     shortDescription: "Day nurseries, pre-schools, childminders, and early years providers",
-    description: "Keep your early years setting fully compliant with Ofsted requirements and the Early Years Foundation Stage (EYFS). Our pack ensures you're prepared for inspections and focused on providing outstanding childcare.",
+    description: "Keep your early years setting compliant with Ofsted requirements and the Early Years Foundation Stage (EYFS). Our pack helps you focus on providing outstanding childcare while meeting your regulatory obligations.",
     whoIsItFor: [
       "Day nurseries",
       "Pre-schools and playgroups",
-      "Childminders",
+      "Registered childminders",
       "Out-of-school clubs",
       "Holiday clubs"
     ],
-    regulatoryBodies: [
-      { name: "Ofsted", full: "Office for Standards in Education", description: "Early years regulator" },
-      { name: "DfE", full: "Department for Education", description: "EYFS framework" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "Local Authority", full: "Local Safeguarding Partnership", description: "Child protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Child Safeguarding", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "EYFS Curriculum", included: true },
-      { name: "Food Safety", included: true },
-      { name: "Prevent Duty", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "equality", "safeguarding", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "food_safety", "dbs_checks"],
+    exampleDocuments: [
+      "Child Protection & Safeguarding Policy",
       "Health & Safety Policy",
-      "Child Safeguarding Policy",
-      "EYFS Curriculum Policy",
-      "Prevent Duty Policy",
-      "Food Safety Policy",
-      "Paediatric First Aid Requirements",
-      "Daily Risk Assessments",
-      "Data Protection (Photos & Records)",
-      "Ofsted Inspection Guide"
+      "Behaviour Management Policy",
+      "Food Safety & Hygiene Policy",
+      "Administering Medicines Policy",
+      "Complaints Procedure",
+      "SEND Policy",
+      "Staff Suitability & Recruitment",
+      "Risk Assessment Templates",
+      "Parent Privacy Notice"
     ],
+    industryDisclaimer: "Childcare providers caring for children under 8 must register with Ofsted. Staff working with children require enhanced DBS checks. This pack supports your Ofsted preparation but does not guarantee registration or inspection outcomes.",
     featured: true
   },
   {
+    id: "education",
+    name: "School & College",
+    category: "Education",
+    icon: "📚",
+    regulators: ["Ofsted", "HSE", "ICO"],
+    shortDescription: "Schools, colleges, tuition centres, and educational institutions",
+    description: "Meet Ofsted requirements and keep children safe with our education compliance pack. Fully aligned with Keeping Children Safe in Education (KCSIE) and the Education Inspection Framework.",
+    whoIsItFor: [
+      "Primary schools",
+      "Secondary schools",
+      "Colleges and sixth forms",
+      "Independent schools",
+      "Tuition centres"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "safeguarding", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "dbs_checks"],
+    exampleDocuments: [
+      "Child Protection Policy (KCSIE)",
+      "Behaviour & Anti-Bullying Policy",
+      "Health & Safety Policy",
+      "Educational Visits Policy",
+      "Allegations Against Staff",
+      "Complaints Procedure",
+      "SEND Policy",
+      "Staff Code of Conduct",
+      "Prevent Duty Policy",
+      "Online Safety Policy"
+    ],
+    industryDisclaimer: "Schools must follow statutory guidance including Keeping Children Safe in Education. This pack supports your safeguarding and compliance obligations but does not replace statutory requirements.",
+    featured: false
+  },
+
+  // ========== CONSTRUCTION ==========
+  {
     id: "construction",
     name: "Construction",
-    industry: "Construction",
+    category: "Construction",
     icon: "🏗️",
-    regulator: "HSE",
+    regulators: ["HSE"],
     shortDescription: "Building contractors, civil engineering, and construction companies",
-    description: "Stay CDM 2015 compliant with our comprehensive construction compliance pack. From principal contractors to subcontractors, we cover all health and safety requirements for the construction industry.",
+    description: "Stay CDM 2015 compliant with our construction compliance pack. We help you meet your health and safety duties whether you're a principal contractor, contractor, or client.",
     whoIsItFor: [
       "Building contractors",
       "Civil engineering firms",
@@ -247,473 +357,30 @@ export const UK_INDUSTRIES = [
       "House builders",
       "Renovation companies"
     ],
-    regulatoryBodies: [
-      { name: "HSE", full: "Health and Safety Executive", description: "CDM 2015 enforcement" },
-      { name: "CITB", full: "Construction Industry Training Board", description: "Skills and training" },
-      { name: "Environment Agency", full: "Environment Agency", description: "Waste and pollution" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "CDM Compliance", included: true },
-      { name: "Asbestos Management", included: true },
-      { name: "COSHH", included: true },
-      { name: "Environmental", included: true }
-    ],
-    typicalDocuments: [
-      "Construction H&S Policy (CDM 2015)",
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "coshh", "manual_handling", "environmental"],
+    exampleDocuments: [
+      "Health & Safety Policy (CDM 2015)",
       "Site Risk Assessment Templates",
-      "COSHH Assessment",
-      "Asbestos Management Plan",
+      "COSHH Assessments",
       "Method Statement Templates",
+      "Asbestos Management Plan",
       "Working at Height Procedures",
-      "Environmental Policy",
-      "Site Worker Handbook",
-      "HSE CDM Guide"
+      "Manual Handling Assessment",
+      "Noise Assessment",
+      "Site Induction Checklist",
+      "Accident Reporting Procedure"
     ],
+    industryDisclaimer: "Construction work must comply with CDM 2015 Regulations. Principal contractors have specific legal duties. This pack provides guidance and templates but responsibility for compliance remains with duty holders.",
     featured: true
-  },
-  {
-    id: "hospitality",
-    name: "Hotel & Hospitality",
-    industry: "Hospitality",
-    icon: "🏨",
-    regulator: "EHO",
-    shortDescription: "Hotels, B&Bs, guest houses, and hospitality venues",
-    description: "Complete compliance pack for the hospitality industry. From boutique B&Bs to large hotels, we cover food safety, fire safety, licensing, and guest welfare requirements.",
-    whoIsItFor: [
-      "Hotels and resorts",
-      "Bed & breakfasts",
-      "Guest houses",
-      "Serviced apartments",
-      "Holiday lets"
-    ],
-    regulatoryBodies: [
-      { name: "EHO", full: "Environmental Health Office", description: "Food and hygiene standards" },
-      { name: "Fire Service", full: "Fire and Rescue Service", description: "Fire safety compliance" },
-      { name: "Licensing Authority", full: "Local Authority Licensing", description: "Alcohol and entertainment" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Food Safety", included: true },
-      { name: "Fire Safety", included: true },
-      { name: "Licensing", included: true },
-      { name: "Allergen Management", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "Food Safety Management (HACCP)",
-      "Fire Safety Policy & Risk Assessment",
-      "Allergen Management Policy",
-      "Guest Data Protection Policy",
-      "Accessibility Policy",
-      "Complaints Procedure",
-      "Staff Handbook",
-      "Licensing Compliance Guide"
-    ],
-    featured: true
-  },
-  {
-    id: "restaurant",
-    name: "Restaurant & Cafe",
-    industry: "Hospitality",
-    icon: "🍽️",
-    regulator: "EHO/FSA",
-    shortDescription: "Restaurants, cafes, coffee shops, and food service businesses",
-    description: "Achieve and maintain your 5-star food hygiene rating with our restaurant compliance pack. We cover everything from HACCP to allergen management, ensuring you meet all Food Standards Agency requirements.",
-    whoIsItFor: [
-      "Restaurants and bistros",
-      "Cafes and coffee shops",
-      "Fast casual dining",
-      "Fine dining establishments",
-      "Pop-up food venues"
-    ],
-    regulatoryBodies: [
-      { name: "FSA", full: "Food Standards Agency", description: "Food safety standards" },
-      { name: "EHO", full: "Environmental Health Office", description: "Local enforcement" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "Licensing", full: "Local Authority Licensing", description: "Alcohol licensing" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Food Safety (HACCP)", included: true },
-      { name: "Fire Safety", included: true },
-      { name: "Allergen Management", included: true }
-    ],
-    typicalDocuments: [
-      "Food Safety Management System",
-      "HACCP Plan",
-      "Allergen Policy (Natasha's Law)",
-      "Fire Safety Policy",
-      "Health & Safety Policy",
-      "Customer Data Policy",
-      "Complaints Procedure",
-      "Staff Handbook",
-      "Food Hygiene Rating Guide"
-    ],
-    featured: false
-  },
-  {
-    id: "retail",
-    name: "Retail Shop",
-    industry: "Retail",
-    icon: "🛍️",
-    regulator: "Trading Standards",
-    shortDescription: "High street shops, boutiques, and retail businesses",
-    description: "Stay compliant with consumer law and workplace regulations in retail. From Trading Standards requirements to staff safety, we've got your retail business covered.",
-    whoIsItFor: [
-      "High street retailers",
-      "Independent shops",
-      "Boutiques",
-      "Charity shops",
-      "Market traders"
-    ],
-    regulatoryBodies: [
-      { name: "Trading Standards", full: "Trading Standards", description: "Consumer protection" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Customer data protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Consumer Rights", included: true },
-      { name: "Fire Safety", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "Customer Data Protection Policy",
-      "Complaints & Returns Policy",
-      "Store Risk Assessment",
-      "Fire Safety Policy",
-      "Manual Handling Procedures",
-      "Staff Handbook",
-      "Consumer Rights Act Guide"
-    ],
-    featured: true
-  },
-  {
-    id: "salon",
-    name: "Hair & Beauty Salon",
-    industry: "Personal Services",
-    icon: "💇",
-    regulator: "EHO",
-    shortDescription: "Hair salons, beauty parlours, nail bars, and spas",
-    description: "Keep your salon compliant with hygiene standards and treatment regulations. Our pack covers everything from infection control to chemical safety for all beauty and hair services.",
-    whoIsItFor: [
-      "Hair salons and barbers",
-      "Beauty salons and spas",
-      "Nail bars",
-      "Massage therapists",
-      "Aesthetic clinics"
-    ],
-    regulatoryBodies: [
-      { name: "EHO", full: "Environmental Health Office", description: "Hygiene standards" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Chemical safety (COSHH)" },
-      { name: "Local Authority", full: "Local Authority", description: "Premises licensing" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Infection Control", included: true },
-      { name: "COSHH", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "Hygiene & Infection Control Policy",
-      "COSHH Assessment",
-      "Treatment Risk Assessments",
-      "Client Data Protection Policy",
-      "Complaints Procedure",
-      "Insurance Requirements",
-      "Staff Handbook"
-    ],
-    featured: false
-  },
-  {
-    id: "education",
-    name: "School & College",
-    industry: "Education",
-    icon: "📚",
-    regulator: "Ofsted",
-    shortDescription: "Schools, colleges, tuition centres, and educational institutions",
-    description: "Meet Ofsted requirements and keep children safe with our education compliance pack. Fully aligned with Keeping Children Safe in Education (KCSIE) and the Education Inspection Framework.",
-    whoIsItFor: [
-      "Primary and secondary schools",
-      "Colleges and sixth forms",
-      "Independent schools",
-      "Tuition centres",
-      "Alternative provision"
-    ],
-    regulatoryBodies: [
-      { name: "Ofsted", full: "Office for Standards in Education", description: "School inspection" },
-      { name: "DfE", full: "Department for Education", description: "Education standards" },
-      { name: "ISI", full: "Independent Schools Inspectorate", description: "Independent school inspection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Child Safeguarding", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Prevent Duty", included: true },
-      { name: "Behaviour Policy", included: true }
-    ],
-    typicalDocuments: [
-      "Child Protection Policy (KCSIE)",
-      "Health & Safety Policy",
-      "Prevent Duty Policy",
-      "Behaviour Policy",
-      "Equality & Accessibility Plan",
-      "Educational Visit Risk Assessment",
-      "Data Protection Policy",
-      "Staff Handbook",
-      "Ofsted Inspection Guide"
-    ],
-    featured: false
-  },
-  {
-    id: "office",
-    name: "Office & Professional",
-    industry: "Professional Services",
-    icon: "💼",
-    regulator: "HSE/ICO",
-    shortDescription: "Offices, consultancies, and professional service firms",
-    description: "Simple compliance for office-based businesses. From DSE assessments to GDPR, we cover all the essentials for professional service providers.",
-    whoIsItFor: [
-      "Professional service firms",
-      "Consultancies",
-      "Tech companies",
-      "Marketing agencies",
-      "Financial advisors"
-    ],
-    regulatoryBodies: [
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Data protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "DSE Compliance", included: true },
-      { name: "Fire Safety", included: true },
-      { name: "Remote Working", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "Data Protection Policy",
-      "DSE Risk Assessment",
-      "Fire Safety Policy",
-      "Remote Working Policy",
-      "Complaints Procedure",
-      "Staff Handbook",
-      "ICO GDPR Guide"
-    ],
-    featured: false
-  },
-  {
-    id: "cleaning",
-    name: "Cleaning Services",
-    industry: "Services",
-    icon: "🧹",
-    regulator: "HSE",
-    shortDescription: "Commercial and domestic cleaning companies",
-    description: "Compliance pack for cleaning businesses, covering COSHH, manual handling, and client premises safety. Perfect for contract cleaners and cleaning agencies.",
-    whoIsItFor: [
-      "Commercial cleaning companies",
-      "Domestic cleaning services",
-      "Specialist cleaning (biohazard, industrial)",
-      "Window cleaning",
-      "Facilities management"
-    ],
-    regulatoryBodies: [
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace and chemical safety" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Client data protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "COSHH", included: true },
-      { name: "Manual Handling", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "COSHH Assessment",
-      "Manual Handling Policy",
-      "Client Premises Risk Assessment",
-      "Data Protection Policy",
-      "Complaints Procedure",
-      "Staff Handbook"
-    ],
-    featured: false
-  },
-  {
-    id: "security",
-    name: "Security Services",
-    industry: "Services",
-    icon: "🛡️",
-    regulator: "SIA",
-    shortDescription: "Security guards, door supervisors, and CCTV operators",
-    description: "Stay SIA compliant with our security industry pack. Covers licensing requirements, use of force policies, and CCTV operation for all types of security services.",
-    whoIsItFor: [
-      "Manned guarding services",
-      "Door supervisors",
-      "CCTV operators",
-      "Close protection",
-      "Key holding services"
-    ],
-    regulatoryBodies: [
-      { name: "SIA", full: "Security Industry Authority", description: "Licensing and standards" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "CCTV and data protection" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "SIA Licensing", included: true },
-      { name: "CCTV Compliance", included: true },
-      { name: "Use of Force", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "SIA Compliance Guide",
-      "CCTV Policy (Surveillance Camera Code)",
-      "Use of Force Policy",
-      "Conflict Management Procedures",
-      "Violence & Aggression Risk Assessment",
-      "Data Protection Policy",
-      "Staff Handbook"
-    ],
-    featured: false
-  },
-  {
-    id: "pharmacy",
-    name: "Pharmacy",
-    industry: "Healthcare",
-    icon: "💊",
-    regulator: "GPhC",
-    shortDescription: "Community pharmacies, dispensing chemists, and pharmacy services",
-    description: "Complete compliance pack for community pharmacies, covering GPhC standards, controlled drugs regulations, and patient safety requirements.",
-    whoIsItFor: [
-      "Community pharmacies",
-      "Dispensing doctors",
-      "Hospital pharmacy services",
-      "Online pharmacies",
-      "Pharmacy chains"
-    ],
-    regulatoryBodies: [
-      { name: "GPhC", full: "General Pharmaceutical Council", description: "Pharmacy regulator" },
-      { name: "MHRA", full: "Medicines and Healthcare products Regulatory Agency", description: "Medicines regulation" },
-      { name: "CQC", full: "Care Quality Commission", description: "Healthcare services" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Controlled Drugs", included: true },
-      { name: "Dispensing Standards", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "Controlled Drugs Policy",
-      "Dispensing SOPs",
-      "Patient Data Protection Policy",
-      "Complaints Procedure",
-      "Clinical Governance",
-      "Staff Handbook",
-      "GPhC Standards Guide"
-    ],
-    featured: false
-  },
-  {
-    id: "gym",
-    name: "Gym & Fitness",
-    industry: "Leisure",
-    icon: "🏋️",
-    regulator: "HSE",
-    shortDescription: "Gyms, fitness centres, personal trainers, and sports facilities",
-    description: "Keep your gym or fitness centre compliant with health and safety requirements. Covers equipment safety, first aid, and member welfare for all fitness businesses.",
-    whoIsItFor: [
-      "Gyms and fitness centres",
-      "Personal training studios",
-      "Yoga and pilates studios",
-      "Sports clubs",
-      "Leisure centres"
-    ],
-    regulatoryBodies: [
-      { name: "HSE", full: "Health and Safety Executive", description: "Equipment and workplace safety" },
-      { name: "CIMSPA", full: "Chartered Institute for Sport", description: "Industry standards" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Member data protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Equipment Safety", included: true },
-      { name: "First Aid", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
-      "Equipment Safety & Maintenance",
-      "Member Risk Assessment",
-      "First Aid Policy",
-      "Emergency Procedures",
-      "Member Data Protection Policy",
-      "Complaints Procedure",
-      "Staff Handbook"
-    ],
-    featured: false
   },
   {
     id: "electrical",
     name: "Electrical Contractor",
-    industry: "Construction",
+    category: "Construction",
     icon: "⚡",
-    regulator: "HSE/NICEIC",
+    regulators: ["HSE", "NICEIC"],
     shortDescription: "Electricians, electrical contractors, and testing services",
-    description: "Compliance pack for electrical contractors covering BS 7671, Part P, and all health and safety requirements for electrical work.",
+    description: "Compliance support for electrical contractors, covering BS 7671, Part P, and health and safety requirements. We help you maintain professional standards and meet your legal obligations.",
     whoIsItFor: [
       "Domestic electricians",
       "Commercial electrical contractors",
@@ -721,41 +388,30 @@ export const UK_INDUSTRIES = [
       "Testing and inspection services",
       "Solar installation companies"
     ],
-    regulatoryBodies: [
-      { name: "HSE", full: "Health and Safety Executive", description: "Electrical safety at work" },
-      { name: "NICEIC", full: "National Inspection Council", description: "Contractor competence" },
-      { name: "Building Control", full: "Local Authority Building Control", description: "Part P compliance" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Electrical Safety", included: true },
-      { name: "Part P Compliance", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "coshh", "manual_handling"],
+    exampleDocuments: [
       "Health & Safety Policy",
       "Electrical Safety Policy",
-      "Risk Assessment Templates",
       "Safe Isolation Procedures",
-      "Part P Compliance Guide",
-      "Customer Data Policy",
-      "Complaints Procedure",
-      "Staff Handbook"
+      "Risk Assessment Templates",
+      "Working at Height Procedures",
+      "Asbestos Awareness Guidance",
+      "PPE Policy",
+      "Client Complaints Procedure",
+      "Staff Training Records",
+      "Vehicle Safety Checklist"
     ],
+    industryDisclaimer: "Electrical work must comply with BS 7671 and Building Regulations Part P. Consider joining a competent person scheme such as NICEIC. This pack supports your compliance but does not replace certification requirements.",
     featured: false
   },
   {
     id: "plumbing",
     name: "Plumbing & Heating",
-    industry: "Construction",
+    category: "Construction",
     icon: "🔧",
-    regulator: "HSE/Gas Safe",
+    regulators: ["HSE", "GasSafe"],
     shortDescription: "Plumbers, heating engineers, and gas installers",
-    description: "Comprehensive compliance for plumbing and heating businesses. Includes Gas Safe requirements for gas work and general H&S for all plumbing services.",
+    description: "Compliance support for plumbing and heating businesses. Includes Gas Safe requirements for gas work and general health and safety guidance for all plumbing services.",
     whoIsItFor: [
       "Plumbing contractors",
       "Gas engineers",
@@ -763,40 +419,94 @@ export const UK_INDUSTRIES = [
       "Boiler service engineers",
       "Bathroom fitters"
     ],
-    regulatoryBodies: [
-      { name: "Gas Safe", full: "Gas Safe Register", description: "Gas work certification" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "Building Control", full: "Local Authority Building Control", description: "Building regulations" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Gas Safety", included: true },
-      { name: "Asbestos Awareness", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "coshh", "manual_handling"],
+    exampleDocuments: [
       "Health & Safety Policy",
       "Gas Safety Procedures",
       "Risk Assessment Templates",
       "Asbestos Awareness Policy",
-      "Customer Data Policy",
-      "Complaints Procedure",
-      "Staff Handbook"
+      "Manual Handling Assessment",
+      "Working in Occupied Premises",
+      "Client Complaints Procedure",
+      "Vehicle & Tool Inventory",
+      "Staff Training Records",
+      "Customer Satisfaction Form"
     ],
+    industryDisclaimer: "Gas work must only be carried out by Gas Safe registered engineers. This pack supports general compliance but does not replace Gas Safe registration for gas work.",
+    featured: false
+  },
+
+  // ========== HOSPITALITY ==========
+  {
+    id: "hospitality",
+    name: "Hotel & Hospitality",
+    category: "Hospitality",
+    icon: "🏨",
+    regulators: ["EHO", "HSE"],
+    shortDescription: "Hotels, B&Bs, guest houses, and hospitality venues",
+    description: "Complete compliance support for the hospitality industry. From fire safety to food hygiene, we help you meet your legal obligations and provide a safe environment for guests and staff.",
+    whoIsItFor: [
+      "Hotels and resorts",
+      "Bed & breakfasts",
+      "Guest houses",
+      "Serviced apartments",
+      "Holiday lets"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "food_safety", "fire_safety", "manual_handling"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Fire Safety Policy & Risk Assessment",
+      "Food Safety Management System",
+      "Allergen Management Policy",
+      "Guest Privacy Notice",
+      "Complaints Procedure",
+      "COSHH Assessment (Cleaning)",
+      "Legionella Risk Assessment",
+      "Staff Handbook",
+      "Accessibility Policy"
+    ],
+    industryDisclaimer: "Hospitality businesses must comply with food hygiene regulations, fire safety requirements, and licensing conditions where applicable. This pack supports your compliance but does not replace local authority inspections.",
+    featured: true
+  },
+  {
+    id: "restaurant",
+    name: "Restaurant & Café",
+    category: "Hospitality",
+    icon: "🍽️",
+    regulators: ["EHO", "FSA"],
+    shortDescription: "Restaurants, cafes, coffee shops, and food service businesses",
+    description: "Achieve and maintain your food hygiene rating with confidence. Our pack covers HACCP, allergen management, and all the policies you need to run a safe and compliant food business.",
+    whoIsItFor: [
+      "Restaurants and bistros",
+      "Cafes and coffee shops",
+      "Fast casual dining",
+      "Fine dining establishments",
+      "Pop-up food venues"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "food_safety", "fire_safety", "coshh"],
+    exampleDocuments: [
+      "Food Safety Management System (HACCP)",
+      "Allergen Management Policy",
+      "Health & Safety Policy",
+      "Fire Safety Procedures",
+      "Cleaning Schedules",
+      "Temperature Monitoring Records",
+      "Staff Training Records",
+      "Complaints Procedure",
+      "Supplier Approval Process",
+      "Pest Control Policy"
+    ],
+    industryDisclaimer: "Food businesses must register with their local authority and comply with food hygiene regulations. Allergen information must be provided to customers (Natasha's Law). This pack supports your compliance but does not guarantee food hygiene ratings.",
     featured: false
   },
   {
     id: "takeaway",
     name: "Takeaway & Fast Food",
-    industry: "Hospitality",
+    category: "Hospitality",
     icon: "🍕",
-    regulator: "EHO/FSA",
+    regulators: ["EHO", "FSA"],
     shortDescription: "Takeaways, fast food outlets, and delivery kitchens",
-    description: "Everything you need for food hygiene compliance in takeaway and fast food operations. Covers HACCP, allergens, and food delivery safety.",
+    description: "Food safety compliance for takeaway and fast food operations. We cover HACCP, allergen management, and food delivery safety requirements.",
     whoIsItFor: [
       "Takeaway restaurants",
       "Fast food outlets",
@@ -804,83 +514,416 @@ export const UK_INDUSTRIES = [
       "Food delivery services",
       "Mobile food vendors"
     ],
-    regulatoryBodies: [
-      { name: "FSA", full: "Food Standards Agency", description: "Food safety standards" },
-      { name: "EHO", full: "Environmental Health Office", description: "Local enforcement" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Food Safety (HACCP)", included: true },
-      { name: "Fire Safety", included: true },
-      { name: "Allergen Management", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "complaints", "risk_assessment", "staff_handbook", "food_safety", "fire_safety", "coshh"],
+    exampleDocuments: [
       "Food Safety Management System",
-      "HACCP Plan",
-      "Allergen Policy",
-      "Fire Safety Policy",
-      "Delivery Safety Procedures",
+      "Allergen Policy & Matrix",
+      "Delivery Food Safety Procedures",
       "Health & Safety Policy",
+      "Cleaning Schedules",
+      "Temperature Records",
+      "Staff Training Log",
       "Complaints Procedure",
-      "Staff Handbook"
+      "Fire Safety Procedures",
+      "Waste Management"
     ],
+    industryDisclaimer: "Food businesses must be registered with their local authority. Allergen information must be available for all menu items. Food hygiene ratings are displayed publicly. This pack supports compliance but does not guarantee ratings.",
+    featured: false
+  },
+
+  // ========== RETAIL ==========
+  {
+    id: "retail",
+    name: "Retail Shop",
+    category: "Retail",
+    icon: "🛍️",
+    regulators: ["TradingStandards", "HSE"],
+    shortDescription: "High street shops, boutiques, and retail businesses",
+    description: "Stay compliant with consumer law and workplace regulations. Our pack covers Trading Standards requirements, health and safety, and customer data protection for retail businesses.",
+    whoIsItFor: [
+      "High street retailers",
+      "Independent shops",
+      "Boutiques",
+      "Charity shops",
+      "Market traders"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "fire_safety", "manual_handling"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Fire Safety Procedures",
+      "Customer Complaints & Returns Policy",
+      "GDPR Customer Privacy Notice",
+      "Manual Handling Assessment",
+      "Display Screen Equipment Assessment",
+      "Accident Reporting Procedure",
+      "Staff Handbook",
+      "Cash Handling Procedures",
+      "Shoplifting & Security Policy"
+    ],
+    industryDisclaimer: "Retail businesses must comply with Consumer Rights Act 2015, product safety regulations, and Trading Standards requirements. This pack provides guidance but responsibility for compliance remains with the business owner.",
+    featured: true
+  },
+
+  // ========== PERSONAL & WELLBEING SERVICES ==========
+  {
+    id: "massage_therapist",
+    name: "Massage Therapist",
+    category: "Personal & Wellbeing Services",
+    icon: "💆",
+    regulators: ["EHO", "HSE", "ICO"],
+    shortDescription: "Sports massage, remedial massage, and therapeutic massage practitioners",
+    description: "Compliance support for massage therapists, whether you work from a clinic, mobile, or home-based practice. We cover hygiene standards, client safety, insurance requirements, and data protection.",
+    whoIsItFor: [
+      "Sports massage therapists",
+      "Remedial massage practitioners",
+      "Swedish massage therapists",
+      "Deep tissue specialists",
+      "Mobile massage therapists"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "infection_control", "client_care", "insurance"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Hygiene & Infection Control Policy",
+      "Client Consultation Form",
+      "Consent & Contraindications Form",
+      "Treatment Record Template",
+      "Client Privacy Notice (GDPR)",
+      "Complaints Procedure",
+      "Insurance Checklist",
+      "Lone Working Policy",
+      "Safeguarding Awareness"
+    ],
+    industryDisclaimer: "Massage therapists should hold appropriate qualifications and insurance. Some local authorities require special treatment licences. This pack supports good practice but does not replace professional training or insurance.",
     featured: false
   },
   {
+    id: "beauty_therapist",
+    name: "Beauty Therapist",
+    category: "Personal & Wellbeing Services",
+    icon: "💅",
+    regulators: ["EHO"],
+    shortDescription: "Beauty treatments, facials, waxing, and skincare specialists",
+    description: "Compliance support for beauty therapists covering hygiene standards, client care, and local authority requirements. Whether salon-based or mobile, we help you maintain professional standards.",
+    whoIsItFor: [
+      "Beauty salons",
+      "Mobile beauty therapists",
+      "Skincare specialists",
+      "Waxing practitioners",
+      "Lash and brow technicians"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "infection_control", "client_care", "coshh", "insurance"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Hygiene & Sterilisation Policy",
+      "Client Consultation Card",
+      "Patch Test Records",
+      "Contraindications Guide",
+      "COSHH Assessment (Products)",
+      "Client Privacy Notice",
+      "Complaints Procedure",
+      "Treatment Pricing Policy",
+      "Insurance Requirements"
+    ],
+    industryDisclaimer: "Some beauty treatments may require local authority registration (e.g., skin piercing, tattooing). Ensure appropriate qualifications and insurance. This pack supports good practice but does not replace regulatory requirements.",
+    featured: false
+  },
+  {
+    id: "nail_technician",
+    name: "Nail Technician",
+    category: "Personal & Wellbeing Services",
+    icon: "💅",
+    regulators: ["EHO"],
+    shortDescription: "Nail salons, manicures, pedicures, and nail art services",
+    description: "Compliance support for nail technicians covering hygiene standards, ventilation requirements, and chemical safety. We help you maintain a safe environment for clients and staff.",
+    whoIsItFor: [
+      "Nail salons",
+      "Mobile nail technicians",
+      "Nail bars",
+      "Manicure specialists",
+      "Acrylic and gel nail technicians"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "complaints", "risk_assessment", "infection_control", "client_care", "coshh", "insurance"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Hygiene & Sterilisation Procedures",
+      "COSHH Assessment (Nail Products)",
+      "Ventilation & Air Quality Policy",
+      "Client Consultation Form",
+      "Complaints Procedure",
+      "Client Privacy Notice",
+      "Tool Cleaning Checklist",
+      "Allergy & Sensitivity Guidance",
+      "Insurance Checklist"
+    ],
+    industryDisclaimer: "Nail services involve chemical products requiring proper ventilation and COSHH compliance. Ensure appropriate qualifications and insurance. This pack supports good practice but does not replace health and safety requirements.",
+    featured: false
+  },
+  {
+    id: "holistic_therapist",
+    name: "Holistic Therapist",
+    category: "Personal & Wellbeing Services",
+    icon: "🧘",
+    regulators: ["EHO", "ICO"],
+    shortDescription: "Aromatherapy, reflexology, reiki, and complementary therapies",
+    description: "Compliance support for holistic and complementary therapists. We cover client safety, consent, data protection, and professional standards for a range of therapies.",
+    whoIsItFor: [
+      "Aromatherapists",
+      "Reflexologists",
+      "Reiki practitioners",
+      "Acupuncturists",
+      "Homeopaths"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "infection_control", "client_care", "insurance"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Client Consultation Form",
+      "Informed Consent Form",
+      "Treatment Records Template",
+      "Contraindications Checklist",
+      "Client Privacy Notice",
+      "Complaints Procedure",
+      "Hygiene Policy",
+      "Insurance Requirements",
+      "Scope of Practice Statement"
+    ],
+    industryDisclaimer: "Holistic therapists should be clear about the scope of their practice and not make medical claims. Some therapies may require local authority registration. This pack supports professional practice but does not replace appropriate training.",
+    featured: false
+  },
+  {
+    id: "yoga_pilates",
+    name: "Yoga / Pilates Instructor",
+    category: "Personal & Wellbeing Services",
+    icon: "🧘‍♀️",
+    regulators: ["HSE", "ICO"],
+    shortDescription: "Yoga teachers, Pilates instructors, and movement practitioners",
+    description: "Compliance support for yoga and Pilates instructors. Whether teaching in studios, gyms, or privately, we cover health and safety, client screening, and insurance requirements.",
+    whoIsItFor: [
+      "Yoga teachers",
+      "Pilates instructors",
+      "Studio owners",
+      "Corporate wellness providers",
+      "Online class instructors"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "client_care", "insurance"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Client Health Screening Form",
+      "Informed Consent & Waiver",
+      "Class Risk Assessment",
+      "Emergency Procedures",
+      "Client Privacy Notice",
+      "Complaints Procedure",
+      "Insurance Checklist",
+      "Equipment Safety Checks",
+      "First Aid Procedures"
+    ],
+    industryDisclaimer: "Instructors should hold recognised qualifications and appropriate insurance. Client health screening is essential. This pack supports safe practice but does not replace professional training or insurance requirements.",
+    featured: false
+  },
+  {
+    id: "home_services",
+    name: "Home-based Personal Services",
+    category: "Personal & Wellbeing Services",
+    icon: "🏠",
+    regulators: ["EHO", "HSE"],
+    shortDescription: "Therapists, beauticians, and practitioners working from home",
+    description: "Compliance support for practitioners offering personal services from home. We cover the additional considerations for home-based work including insurance, hygiene, and client safety.",
+    whoIsItFor: [
+      "Home-based beauty therapists",
+      "Home salon operators",
+      "Private treatment rooms",
+      "Mobile practitioners with home base",
+      "Home-based wellness practitioners"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "complaints", "risk_assessment", "infection_control", "client_care", "insurance", "fire_safety"],
+    exampleDocuments: [
+      "Home Working Health & Safety Policy",
+      "Home Insurance Guidance",
+      "Client Booking & Access Procedures",
+      "Hygiene & Cleaning Schedule",
+      "Fire Safety for Home Businesses",
+      "Client Privacy Notice",
+      "Complaints Procedure",
+      "Risk Assessment (Home Environment)",
+      "Emergency Procedures",
+      "Planning Permission Guidance"
+    ],
+    industryDisclaimer: "Home-based businesses may need to notify insurers and check lease or mortgage conditions. Planning permission may be required for certain changes. This pack provides guidance but professional advice should be sought where needed.",
+    featured: false
+  },
+
+  // ========== PROFESSIONAL SERVICES ==========
+  {
+    id: "office",
+    name: "Office & Professional Services",
+    category: "Professional Services",
+    icon: "💼",
+    regulators: ["HSE", "ICO"],
+    shortDescription: "Offices, consultancies, and professional service firms",
+    description: "Simple compliance for office-based businesses. We cover workplace health and safety, display screen equipment, data protection, and the essentials for professional service providers.",
+    whoIsItFor: [
+      "Professional service firms",
+      "Consultancies",
+      "Tech companies",
+      "Marketing agencies",
+      "Financial advisors"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "fire_safety"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Display Screen Equipment Policy",
+      "Data Protection Policy",
+      "Fire Safety Procedures",
+      "Homeworking Policy",
+      "Staff Handbook",
+      "Complaints Procedure",
+      "Accident Reporting",
+      "First Aid Procedures",
+      "Stress & Wellbeing Policy"
+    ],
+    industryDisclaimer: "Office-based businesses must comply with workplace health and safety regulations and GDPR. This pack provides essential policies but may need supplementing for regulated professions.",
+    featured: false
+  },
+
+  // ========== SERVICES ==========
+  {
+    id: "cleaning",
+    name: "Cleaning Services",
+    category: "Services",
+    icon: "🧹",
+    regulators: ["HSE"],
+    shortDescription: "Commercial and domestic cleaning companies",
+    description: "Compliance support for cleaning businesses covering COSHH, manual handling, and working safely on client premises. Perfect for contract cleaners and cleaning agencies.",
+    whoIsItFor: [
+      "Commercial cleaning companies",
+      "Domestic cleaning services",
+      "Specialist cleaning (end of tenancy)",
+      "Window cleaning",
+      "Facilities management"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "coshh", "manual_handling", "dbs_checks"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "COSHH Assessment",
+      "Manual Handling Policy",
+      "Working on Client Premises",
+      "Lone Working Policy",
+      "Key Holding Procedures",
+      "Staff Vetting Policy",
+      "Complaints Procedure",
+      "Equipment Safety Checks",
+      "Accident Reporting"
+    ],
+    industryDisclaimer: "Cleaning staff working in certain environments (e.g., schools, care homes) may require DBS checks. COSHH assessments are legally required for cleaning chemicals. This pack supports your compliance obligations.",
+    featured: false
+  },
+  {
+    id: "security",
+    name: "Security Services",
+    category: "Services",
+    icon: "🛡️",
+    regulators: ["SIA", "HSE"],
+    shortDescription: "Security guards, door supervisors, and CCTV operators",
+    description: "Stay SIA compliant with our security industry pack. We cover licensing requirements, use of force policies, and CCTV operation for all types of security services.",
+    whoIsItFor: [
+      "Manned guarding services",
+      "Door supervisors",
+      "CCTV operators",
+      "Close protection",
+      "Key holding services"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "licensing", "dbs_checks"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "SIA Licensing Compliance",
+      "Use of Force Policy",
+      "CCTV Policy (Surveillance Code)",
+      "Conflict Management Procedures",
+      "Lone Working Policy",
+      "Complaints Procedure",
+      "Incident Reporting",
+      "Staff Vetting & DBS",
+      "Data Protection (CCTV)"
+    ],
+    industryDisclaimer: "Security operatives must hold valid SIA licences. Companies providing security services must be SIA approved contractors or ensure all staff are licensed. This pack supports compliance but does not replace SIA requirements.",
+    featured: false
+  },
+
+  // ========== LEISURE ==========
+  {
+    id: "gym",
+    name: "Gym & Fitness",
+    category: "Leisure",
+    icon: "🏋️",
+    regulators: ["HSE"],
+    shortDescription: "Gyms, fitness centres, personal trainers, and sports facilities",
+    description: "Compliance support for the fitness industry. We cover equipment safety, member welfare, and health screening to help you run a safe and professional facility.",
+    whoIsItFor: [
+      "Gyms and fitness centres",
+      "Personal training studios",
+      "Yoga and Pilates studios",
+      "Sports clubs",
+      "Leisure centres"
+    ],
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "client_care", "insurance"],
+    exampleDocuments: [
+      "Health & Safety Policy",
+      "Equipment Safety & Maintenance",
+      "Member Health Screening",
+      "Emergency Procedures",
+      "First Aid Policy",
+      "Complaints Procedure",
+      "Member Privacy Notice",
+      "Staff Training Records",
+      "Pool Safety (if applicable)",
+      "Accident Reporting"
+    ],
+    industryDisclaimer: "Fitness facilities should follow industry standards such as UK Active guidelines. Personal trainers should hold recognised qualifications and insurance. This pack supports good practice but does not replace professional requirements.",
+    featured: false
+  },
+
+  // ========== THIRD SECTOR ==========
+  {
     id: "charity",
     name: "Charity & Non-Profit",
-    industry: "Third Sector",
+    category: "Third Sector",
     icon: "❤️",
-    regulator: "Charity Commission",
+    regulators: ["CharityCommission", "ICO"],
     shortDescription: "Charities, CICs, and non-profit organisations",
-    description: "Governance and compliance pack for the charity sector. Covers Charity Commission requirements, safeguarding, and trustee responsibilities.",
+    description: "Governance and compliance support for the charity sector. We cover Charity Commission requirements, safeguarding, data protection, and trustee responsibilities.",
     whoIsItFor: [
       "Registered charities",
-      "Community interest companies (CICs)",
+      "Community interest companies",
       "Social enterprises",
       "Voluntary organisations",
       "Faith-based organisations"
     ],
-    regulatoryBodies: [
-      { name: "Charity Commission", full: "Charity Commission", description: "Charity regulator" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workplace safety" },
-      { name: "ICO", full: "Information Commissioner's Office", description: "Donor data protection" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Safeguarding", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Governance", included: true },
-      { name: "Fundraising Compliance", included: true }
-    ],
-    typicalDocuments: [
-      "Health & Safety Policy",
+    complianceAreas: ["health_safety", "gdpr", "equality", "safeguarding", "complaints", "risk_assessment", "staff_handbook", "dbs_checks"],
+    exampleDocuments: [
       "Safeguarding Policy",
-      "Trustee Governance Guide",
-      "Donor Data Protection Policy",
-      "Fundraising Compliance Policy",
+      "Trustee Code of Conduct",
+      "Volunteer Policy",
+      "Data Protection Policy",
+      "Fundraising Compliance",
       "Complaints Procedure",
-      "Volunteer Handbook",
-      "Charity Commission Guide"
+      "Conflict of Interest Policy",
+      "Financial Controls",
+      "Health & Safety Policy",
+      "Risk Management Framework"
     ],
+    industryDisclaimer: "Charities must comply with Charity Commission guidance. Trustees have legal duties. Safeguarding requirements depend on beneficiary groups. This pack supports good governance but does not replace legal or professional advice.",
     featured: false
   },
+
+  // ========== AUTOMOTIVE ==========
   {
     id: "motor_trade",
     name: "Motor Trade & Garage",
-    industry: "Automotive",
+    category: "Automotive",
     icon: "🚗",
-    regulator: "Trading Standards",
+    regulators: ["TradingStandards", "HSE"],
     shortDescription: "Car dealerships, garages, MOT stations, and vehicle services",
-    description: "Stay compliant in the motor trade with our comprehensive pack covering consumer rights, MOT authorisation, and workshop safety.",
+    description: "Compliance support for the motor trade covering consumer rights, workshop safety, and environmental requirements. We help you meet your obligations to customers and staff.",
     whoIsItFor: [
       "Car dealerships",
       "Independent garages",
@@ -888,58 +931,94 @@ export const UK_INDUSTRIES = [
       "Body shops",
       "Tyre and exhaust centres"
     ],
-    regulatoryBodies: [
-      { name: "DVSA", full: "Driver and Vehicle Standards Agency", description: "MOT authorisation" },
-      { name: "Trading Standards", full: "Trading Standards", description: "Consumer protection" },
-      { name: "HSE", full: "Health and Safety Executive", description: "Workshop safety" },
-      { name: "Environment Agency", full: "Environment Agency", description: "Waste disposal" }
-    ],
-    complianceAreas: [
-      { name: "Health & Safety", included: true },
-      { name: "GDPR & Data Protection", included: true },
-      { name: "Equality & Diversity", included: true },
-      { name: "Complaints Procedures", included: true },
-      { name: "Risk Assessments", included: true },
-      { name: "Staff Handbook", included: true },
-      { name: "Consumer Rights", included: true },
-      { name: "Environmental", included: true }
-    ],
-    typicalDocuments: [
+    complianceAreas: ["health_safety", "gdpr", "equality", "complaints", "risk_assessment", "staff_handbook", "mandatory_posters", "coshh", "environmental"],
+    exampleDocuments: [
       "Health & Safety Policy",
       "Workshop Risk Assessment",
+      "COSHH Assessment",
       "Consumer Rights Policy",
-      "MOT Compliance Guide",
+      "MOT Station Requirements",
       "Environmental Policy (Waste)",
-      "Customer Data Policy",
       "Complaints Procedure",
-      "Staff Handbook"
+      "Vehicle Handover Checklist",
+      "Staff Training Records",
+      "Tool & Equipment Safety"
     ],
+    industryDisclaimer: "Motor trade businesses must comply with Consumer Rights Act 2015 and Trading Standards requirements. MOT stations have additional DVSA requirements. This pack provides guidance but responsibility for compliance remains with the business.",
     featured: false
   }
 ];
 
-// Get featured industries (for homepage display)
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Get featured industries for homepage display (max 8)
+ */
 export const getFeaturedIndustries = (limit = 8) => {
   const featured = UK_INDUSTRIES.filter(ind => ind.featured);
   const nonFeatured = UK_INDUSTRIES.filter(ind => !ind.featured);
   return [...featured, ...nonFeatured].slice(0, limit);
 };
 
-// Get all industries
+/**
+ * Get all industries
+ */
 export const getAllIndustries = () => UK_INDUSTRIES;
 
-// Get industry by ID
+/**
+ * Get industry by ID
+ */
 export const getIndustryById = (id) => UK_INDUSTRIES.find(ind => ind.id === id);
 
-// Get industries grouped by category
+/**
+ * Get industries grouped by category
+ */
 export const getIndustriesGroupedByCategory = () => {
   return UK_INDUSTRIES.reduce((acc, ind) => {
-    if (!acc[ind.industry]) {
-      acc[ind.industry] = [];
+    if (!acc[ind.category]) {
+      acc[ind.category] = [];
     }
-    acc[ind.industry].push(ind);
+    acc[ind.category].push(ind);
     return acc;
   }, {});
+};
+
+/**
+ * Get compliance areas for an industry
+ */
+export const getComplianceAreasForIndustry = (industryId) => {
+  const industry = getIndustryById(industryId);
+  if (!industry) return [];
+  return industry.complianceAreas.map(areaId => COMPLIANCE_AREAS[areaId]).filter(Boolean);
+};
+
+/**
+ * Get regulatory bodies for an industry
+ */
+export const getRegulatoryBodiesForIndustry = (industryId) => {
+  const industry = getIndustryById(industryId);
+  if (!industry) return [];
+  return industry.regulators.map(regId => REGULATORY_BODIES[regId]).filter(Boolean);
+};
+
+/**
+ * Get total industry count
+ */
+export const getIndustryCount = () => UK_INDUSTRIES.length;
+
+/**
+ * Get category list
+ */
+export const getCategories = () => {
+  return [...new Set(UK_INDUSTRIES.map(ind => ind.category))];
+};
+
+// ==================== PLATFORM DISCLAIMERS ====================
+
+export const PLATFORM_DISCLAIMERS = {
+  footer: "Compliance requirements may vary by location, services offered, and regulatory updates. SimplyComply assists with compliance but does not guarantee regulatory approval.",
+  signup: "By signing up, you acknowledge that compliance requirements may vary and that responsibility for ensuring compliance remains with your business.",
+  general: "SimplyComply provides guidance, templates, and supporting documentation to help UK businesses understand and prepare for compliance requirements. We are not a regulatory body and cannot guarantee compliance outcomes."
 };
 
 export default UK_INDUSTRIES;
