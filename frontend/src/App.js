@@ -15,6 +15,8 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import SubscriptionSuccessPage from "./pages/SubscriptionSuccessPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import EmployeesPage from "./pages/EmployeesPage";
+import EmployeeDetailPage from "./pages/EmployeeDetailPage";
 
 function App() {
   return (
