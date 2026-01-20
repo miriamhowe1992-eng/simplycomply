@@ -63,8 +63,8 @@ class BusinessCreate(BaseModel):
     name: str
     industry: str
     sector: str
-    size: str  # small, medium, large
-    uk_nation: str  # England, Scotland, Wales, Northern Ireland
+    size: str
+    uk_nation: str
     address: Optional[str] = None
     phone: Optional[str] = None
 
@@ -101,7 +101,7 @@ class ChecklistItemResponse(BaseModel):
     document_id: str
     title: str
     category: str
-    status: str  # complete, needs_review, not_started
+    status: str
     last_reviewed: Optional[str]
     next_review_due: Optional[str]
 
@@ -110,21 +110,82 @@ class NotificationResponse(BaseModel):
     id: str
     title: str
     message: str
-    type: str  # info, warning, reminder
+    type: str
     is_read: bool
     created_at: str
 
 class CheckoutRequest(BaseModel):
-    plan: str  # monthly or annual
+    plan: str
     origin_url: str
 
-class SubscriptionPlans(BaseModel):
+# ======================= EMPLOYEE MODELS =======================
+
+class EmployeeCreate(BaseModel):
+    first_name: str
+    last_name: str
+    email: Optional[EmailStr] = None
+    job_title: str
+    department: Optional[str] = None
+    start_date: str
+    phone: Optional[str] = None
+    emergency_contact: Optional[str] = None
+
+class EmployeeUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    job_title: Optional[str] = None
+    department: Optional[str] = None
+    phone: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class EmployeeResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    plan_id: str
-    name: str
-    price: float
-    currency: str
-    interval: str
+    id: str
+    business_id: str
+    first_name: str
+    last_name: str
+    email: Optional[str]
+    job_title: str
+    department: Optional[str]
+    start_date: str
+    phone: Optional[str]
+    emergency_contact: Optional[str]
+    is_active: bool
+    created_at: str
+    compliance_summary: Optional[Dict] = None
+
+class EmployeeRequirementCreate(BaseModel):
+    requirement_type: str  # dbs, right_to_work, training, certification, health_check, etc.
+    title: str
+    description: Optional[str] = None
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    reference_number: Optional[str] = None
+    status: str = "pending"  # pending, valid, expired, expiring_soon
+
+class EmployeeRequirementUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    issue_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    reference_number: Optional[str] = None
+    status: Optional[str] = None
+
+class EmployeeRequirementResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    employee_id: str
+    requirement_type: str
+    title: str
+    description: Optional[str]
+    issue_date: Optional[str]
+    expiry_date: Optional[str]
+    reference_number: Optional[str]
+    status: str
+    days_until_expiry: Optional[int]
+    created_at: str
 
 # ======================= HELPER FUNCTIONS =======================
 
@@ -160,6 +221,25 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+def calculate_requirement_status(expiry_date_str: Optional[str]) -> tuple:
+    """Calculate status and days until expiry"""
+    if not expiry_date_str:
+        return "pending", None
+    
+    try:
+        expiry_date = datetime.fromisoformat(expiry_date_str.replace('Z', '+00:00'))
+        now = datetime.now(timezone.utc)
+        days_until = (expiry_date - now).days
+        
+        if days_until < 0:
+            return "expired", days_until
+        elif days_until <= 30:
+            return "expiring_soon", days_until
+        else:
+            return "valid", days_until
+    except:
+        return "pending", None
+
 # ======================= SUBSCRIPTION PLANS =======================
 
 SUBSCRIPTION_PLANS = {
@@ -167,17 +247,59 @@ SUBSCRIPTION_PLANS = {
     "annual": {"name": "Annual Plan", "price": 290.00, "currency": "gbp", "interval": "year"}
 }
 
-# ======================= UK SECTORS & COMPLIANCE DATA =======================
+# ======================= EXPANDED UK SECTORS =======================
 
 UK_SECTORS = [
-    {"id": "dental", "name": "Dental Practice", "industry": "Healthcare"},
-    {"id": "healthcare", "name": "Healthcare Provider", "industry": "Healthcare"},
-    {"id": "care_home", "name": "Care Home", "industry": "Healthcare"},
-    {"id": "construction", "name": "Construction", "industry": "Construction"},
-    {"id": "hospitality", "name": "Hospitality", "industry": "Hospitality"},
-    {"id": "retail", "name": "Retail", "industry": "Retail"},
-    {"id": "education", "name": "Education", "industry": "Education"},
-    {"id": "office", "name": "Office/Professional Services", "industry": "Professional Services"}
+    # Healthcare & Medical
+    {"id": "dental", "name": "Dental Practice", "industry": "Healthcare", "regulator": "CQC"},
+    {"id": "healthcare", "name": "Healthcare Provider", "industry": "Healthcare", "regulator": "CQC"},
+    {"id": "care_home", "name": "Care Home", "industry": "Healthcare", "regulator": "CQC"},
+    {"id": "veterinary", "name": "Veterinary Practice", "industry": "Healthcare", "regulator": "RCVS"},
+    {"id": "pharmacy", "name": "Pharmacy", "industry": "Healthcare", "regulator": "GPhC"},
+    {"id": "optician", "name": "Optician / Optometrist", "industry": "Healthcare", "regulator": "GOC"},
+    {"id": "physiotherapy", "name": "Physiotherapy / Sports Therapy", "industry": "Healthcare", "regulator": "HCPC"},
+    {"id": "mental_health", "name": "Mental Health Services", "industry": "Healthcare", "regulator": "CQC"},
+    
+    # Construction & Trades
+    {"id": "construction", "name": "Construction", "industry": "Construction", "regulator": "HSE"},
+    {"id": "electrical", "name": "Electrical Contractor", "industry": "Construction", "regulator": "HSE/NICEIC"},
+    {"id": "plumbing", "name": "Plumbing & Heating", "industry": "Construction", "regulator": "HSE/Gas Safe"},
+    {"id": "roofing", "name": "Roofing Contractor", "industry": "Construction", "regulator": "HSE"},
+    
+    # Hospitality & Food
+    {"id": "hospitality", "name": "Hotel / B&B", "industry": "Hospitality", "regulator": "EHO"},
+    {"id": "restaurant", "name": "Restaurant / Cafe", "industry": "Hospitality", "regulator": "EHO/FSA"},
+    {"id": "pub", "name": "Pub / Bar", "industry": "Hospitality", "regulator": "EHO/Licensing"},
+    {"id": "catering", "name": "Catering Services", "industry": "Hospitality", "regulator": "EHO/FSA"},
+    {"id": "takeaway", "name": "Takeaway / Fast Food", "industry": "Hospitality", "regulator": "EHO/FSA"},
+    
+    # Retail & Services
+    {"id": "retail", "name": "Retail Shop", "industry": "Retail", "regulator": "Trading Standards"},
+    {"id": "salon", "name": "Hair / Beauty Salon", "industry": "Personal Services", "regulator": "EHO"},
+    {"id": "tattoo", "name": "Tattoo / Piercing Studio", "industry": "Personal Services", "regulator": "EHO"},
+    {"id": "gym", "name": "Gym / Fitness Centre", "industry": "Leisure", "regulator": "HSE"},
+    
+    # Education & Childcare
+    {"id": "education", "name": "School / College", "industry": "Education", "regulator": "Ofsted"},
+    {"id": "nursery", "name": "Nursery / Childcare", "industry": "Education", "regulator": "Ofsted"},
+    {"id": "tuition", "name": "Tuition Centre", "industry": "Education", "regulator": "Ofsted"},
+    
+    # Professional Services
+    {"id": "office", "name": "Office / Professional Services", "industry": "Professional Services", "regulator": "HSE/ICO"},
+    {"id": "accountancy", "name": "Accountancy Practice", "industry": "Professional Services", "regulator": "ICAEW/ACCA"},
+    {"id": "legal", "name": "Legal Practice", "industry": "Professional Services", "regulator": "SRA"},
+    {"id": "estate_agent", "name": "Estate Agency", "industry": "Professional Services", "regulator": "Trading Standards"},
+    {"id": "recruitment", "name": "Recruitment Agency", "industry": "Professional Services", "regulator": "ICO/HMRC"},
+    
+    # Other Small Businesses
+    {"id": "cleaning", "name": "Cleaning Services", "industry": "Services", "regulator": "HSE"},
+    {"id": "security", "name": "Security Services", "industry": "Services", "regulator": "SIA"},
+    {"id": "transport", "name": "Transport / Logistics", "industry": "Transport", "regulator": "DVSA"},
+    {"id": "motor_trade", "name": "Motor Trade / Garage", "industry": "Automotive", "regulator": "Trading Standards"},
+    {"id": "agriculture", "name": "Farm / Agriculture", "industry": "Agriculture", "regulator": "HSE"},
+    {"id": "manufacturing", "name": "Manufacturing", "industry": "Manufacturing", "regulator": "HSE"},
+    {"id": "warehouse", "name": "Warehouse / Distribution", "industry": "Logistics", "regulator": "HSE"},
+    {"id": "charity", "name": "Charity / Non-Profit", "industry": "Third Sector", "regulator": "Charity Commission"},
 ]
 
 UK_NATIONS = ["England", "Scotland", "Wales", "Northern Ireland"]
@@ -189,7 +311,6 @@ BUSINESS_SIZES = [
     {"id": "large", "name": "Large (250+ employees)"}
 ]
 
-# Compliance document categories
 COMPLIANCE_CATEGORIES = [
     "Health & Safety",
     "GDPR & Data Protection",
@@ -199,100 +320,333 @@ COMPLIANCE_CATEGORIES = [
     "Risk Assessments",
     "Staff Handbook",
     "Mandatory Posters",
-    "Regulatory Guidance"
+    "Regulatory Guidance",
+    "Fire Safety",
+    "Food Safety",
+    "Infection Control",
+    "Environmental"
 ]
 
-# Sample compliance documents per sector
+# ======================= EMPLOYEE REQUIREMENT TYPES BY SECTOR =======================
+
+EMPLOYEE_REQUIREMENTS = {
+    # Healthcare sectors - comprehensive requirements
+    "dental": [
+        {"type": "dbs", "title": "Enhanced DBS Check", "description": "Enhanced Disclosure and Barring Service check required for patient-facing roles", "renewal_months": 36, "mandatory": True},
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "gdc_registration", "title": "GDC Registration", "description": "General Dental Council registration for dentists and dental nurses", "renewal_months": 12, "mandatory": True},
+        {"type": "indemnity", "title": "Professional Indemnity", "description": "Valid professional indemnity insurance", "renewal_months": 12, "mandatory": True},
+        {"type": "cpd", "title": "CPD Record", "description": "Continuing Professional Development hours", "renewal_months": 12, "mandatory": True},
+        {"type": "hep_b", "title": "Hepatitis B Vaccination", "description": "Hepatitis B vaccination and immunity check", "renewal_months": 60, "mandatory": True},
+        {"type": "basic_life_support", "title": "Basic Life Support Training", "description": "BLS/CPR certification", "renewal_months": 12, "mandatory": True},
+        {"type": "safeguarding", "title": "Safeguarding Training", "description": "Adult and child safeguarding awareness", "renewal_months": 36, "mandatory": True},
+        {"type": "infection_control", "title": "Infection Control Training", "description": "HTM 01-05 compliant training", "renewal_months": 12, "mandatory": True},
+        {"type": "radiation_protection", "title": "Radiation Protection Training", "description": "IR(ME)R training for radiography", "renewal_months": 36, "mandatory": False},
+    ],
+    "healthcare": [
+        {"type": "dbs", "title": "Enhanced DBS Check", "description": "Enhanced DBS with barred lists check", "renewal_months": 36, "mandatory": True},
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "nmc_registration", "title": "NMC Registration", "description": "Nursing and Midwifery Council registration", "renewal_months": 12, "mandatory": True},
+        {"type": "indemnity", "title": "Professional Indemnity", "description": "Valid professional indemnity insurance", "renewal_months": 12, "mandatory": True},
+        {"type": "revalidation", "title": "Professional Revalidation", "description": "NMC/GMC revalidation completed", "renewal_months": 36, "mandatory": True},
+        {"type": "hep_b", "title": "Hepatitis B Vaccination", "description": "Hepatitis B vaccination status", "renewal_months": 60, "mandatory": True},
+        {"type": "basic_life_support", "title": "Basic Life Support Training", "description": "BLS/ILS certification", "renewal_months": 12, "mandatory": True},
+        {"type": "safeguarding", "title": "Safeguarding Training", "description": "Level 3 safeguarding training", "renewal_months": 36, "mandatory": True},
+        {"type": "manual_handling", "title": "Manual Handling Training", "description": "Moving and handling certification", "renewal_months": 12, "mandatory": True},
+        {"type": "infection_control", "title": "Infection Control Training", "description": "Infection prevention and control", "renewal_months": 12, "mandatory": True},
+        {"type": "information_governance", "title": "Information Governance", "description": "Data Security & Protection Toolkit", "renewal_months": 12, "mandatory": True},
+    ],
+    "care_home": [
+        {"type": "dbs", "title": "Enhanced DBS Check", "description": "Enhanced DBS with adults barred list", "renewal_months": 36, "mandatory": True},
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "care_certificate", "title": "Care Certificate", "description": "15 standards care certificate completion", "renewal_months": None, "mandatory": True},
+        {"type": "safeguarding", "title": "Safeguarding Adults Training", "description": "Adult safeguarding level 2", "renewal_months": 36, "mandatory": True},
+        {"type": "manual_handling", "title": "Manual Handling Training", "description": "Moving and handling of residents", "renewal_months": 12, "mandatory": True},
+        {"type": "medication", "title": "Medication Administration", "description": "Safe handling of medication", "renewal_months": 12, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "First aid at work certificate", "renewal_months": 36, "mandatory": True},
+        {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire awareness and evacuation", "renewal_months": 12, "mandatory": True},
+        {"type": "food_hygiene", "title": "Food Hygiene Certificate", "description": "Level 2 food hygiene", "renewal_months": 36, "mandatory": False},
+        {"type": "dementia", "title": "Dementia Awareness", "description": "Dementia care training", "renewal_months": 24, "mandatory": False},
+    ],
+    "veterinary": [
+        {"type": "dbs", "title": "Basic DBS Check", "description": "Basic criminal record check", "renewal_months": 36, "mandatory": True},
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "rcvs_registration", "title": "RCVS Registration", "description": "Royal College of Veterinary Surgeons registration", "renewal_months": 12, "mandatory": True},
+        {"type": "cpd", "title": "CPD Record", "description": "35 hours CPD annually", "renewal_months": 12, "mandatory": True},
+        {"type": "indemnity", "title": "Professional Indemnity", "description": "Veterinary defence insurance", "renewal_months": 12, "mandatory": True},
+        {"type": "controlled_drugs", "title": "Controlled Drugs Training", "description": "Handling of veterinary medicines", "renewal_months": 24, "mandatory": True},
+        {"type": "radiation_protection", "title": "Radiation Protection", "description": "X-ray safety training", "renewal_months": 36, "mandatory": False},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Workplace first aid", "renewal_months": 36, "mandatory": True},
+    ],
+    "nursery": [
+        {"type": "dbs", "title": "Enhanced DBS Check", "description": "Enhanced DBS with children's barred list", "renewal_months": 36, "mandatory": True},
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "childcare_qualification", "title": "Childcare Qualification", "description": "Level 2/3 childcare qualification", "renewal_months": None, "mandatory": True},
+        {"type": "safeguarding", "title": "Child Safeguarding Training", "description": "Keeping Children Safe training", "renewal_months": 36, "mandatory": True},
+        {"type": "paediatric_first_aid", "title": "Paediatric First Aid", "description": "12-hour paediatric first aid certificate", "renewal_months": 36, "mandatory": True},
+        {"type": "food_hygiene", "title": "Food Hygiene Certificate", "description": "Level 2 food safety", "renewal_months": 36, "mandatory": True},
+        {"type": "prevent", "title": "Prevent Training", "description": "Counter-terrorism awareness", "renewal_months": 36, "mandatory": True},
+        {"type": "health_safety", "title": "Health & Safety Training", "description": "Workplace H&S awareness", "renewal_months": 24, "mandatory": True},
+    ],
+    "education": [
+        {"type": "dbs", "title": "Enhanced DBS Check", "description": "Enhanced DBS with children's barred list", "renewal_months": 36, "mandatory": True},
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "qts", "title": "Qualified Teacher Status", "description": "QTS or equivalent qualification", "renewal_months": None, "mandatory": True},
+        {"type": "safeguarding", "title": "Safeguarding Training", "description": "KCSIE compliant training", "renewal_months": 12, "mandatory": True},
+        {"type": "prevent", "title": "Prevent Training", "description": "Counter-terrorism duty training", "renewal_months": 36, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "First aid at work", "renewal_months": 36, "mandatory": True},
+        {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire warden training", "renewal_months": 12, "mandatory": True},
+    ],
+    "construction": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "cscs", "title": "CSCS Card", "description": "Construction Skills Certification Scheme card", "renewal_months": 60, "mandatory": True},
+        {"type": "health_safety", "title": "Site Safety (SMSTS/SSSTS)", "description": "Site management safety training scheme", "renewal_months": 60, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid at work", "renewal_months": 36, "mandatory": True},
+        {"type": "asbestos", "title": "Asbestos Awareness", "description": "CAT A asbestos awareness", "renewal_months": 12, "mandatory": True},
+        {"type": "working_at_height", "title": "Working at Height", "description": "Ladder and scaffold safety", "renewal_months": 36, "mandatory": True},
+        {"type": "manual_handling", "title": "Manual Handling", "description": "Safe lifting techniques", "renewal_months": 36, "mandatory": True},
+        {"type": "coshh", "title": "COSHH Training", "description": "Control of substances hazardous to health", "renewal_months": 36, "mandatory": True},
+    ],
+    "hospitality": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "food_hygiene", "title": "Food Hygiene Certificate", "description": "Level 2 food safety in catering", "renewal_months": 36, "mandatory": True},
+        {"type": "allergen_training", "title": "Allergen Awareness", "description": "Food allergen training (Natasha's Law)", "renewal_months": 36, "mandatory": True},
+        {"type": "personal_licence", "title": "Personal Licence", "description": "Alcohol licensing qualification", "renewal_months": None, "mandatory": False},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid", "renewal_months": 36, "mandatory": True},
+        {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire awareness and evacuation", "renewal_months": 12, "mandatory": True},
+        {"type": "health_safety", "title": "Health & Safety", "description": "General H&S awareness", "renewal_months": 36, "mandatory": True},
+    ],
+    "restaurant": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "food_hygiene", "title": "Food Hygiene Certificate", "description": "Level 2 food safety", "renewal_months": 36, "mandatory": True},
+        {"type": "allergen_training", "title": "Allergen Awareness", "description": "14 allergens training", "renewal_months": 36, "mandatory": True},
+        {"type": "haccp", "title": "HACCP Training", "description": "Food safety management", "renewal_months": 36, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid", "renewal_months": 36, "mandatory": True},
+        {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire safety awareness", "renewal_months": 12, "mandatory": True},
+    ],
+    "salon": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "nvq_qualification", "title": "NVQ Qualification", "description": "Level 2/3 hairdressing or beauty", "renewal_months": None, "mandatory": True},
+        {"type": "insurance", "title": "Public Liability Insurance", "description": "Treatment liability cover", "renewal_months": 12, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid", "renewal_months": 36, "mandatory": True},
+        {"type": "infection_control", "title": "Infection Control", "description": "Hygiene and sterilisation", "renewal_months": 24, "mandatory": True},
+        {"type": "coshh", "title": "COSHH Training", "description": "Chemical handling safety", "renewal_months": 36, "mandatory": True},
+    ],
+    "security": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "sia_licence", "title": "SIA Licence", "description": "Security Industry Authority licence", "renewal_months": 36, "mandatory": True},
+        {"type": "dbs", "title": "Enhanced DBS Check", "description": "Criminal record check", "renewal_months": 36, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid", "renewal_months": 36, "mandatory": True},
+        {"type": "conflict_management", "title": "Conflict Management", "description": "De-escalation training", "renewal_months": 24, "mandatory": True},
+        {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire warden duties", "renewal_months": 12, "mandatory": True},
+    ],
+    "cleaning": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "dbs", "title": "Basic DBS Check", "description": "Criminal record check", "renewal_months": 36, "mandatory": True},
+        {"type": "coshh", "title": "COSHH Training", "description": "Safe use of cleaning chemicals", "renewal_months": 36, "mandatory": True},
+        {"type": "manual_handling", "title": "Manual Handling", "description": "Safe lifting and carrying", "renewal_months": 36, "mandatory": True},
+        {"type": "health_safety", "title": "Health & Safety", "description": "General H&S awareness", "renewal_months": 36, "mandatory": True},
+    ],
+    "retail": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid", "renewal_months": 36, "mandatory": True},
+        {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire awareness", "renewal_months": 12, "mandatory": True},
+        {"type": "manual_handling", "title": "Manual Handling", "description": "Safe lifting", "renewal_months": 36, "mandatory": True},
+        {"type": "health_safety", "title": "Health & Safety", "description": "General H&S awareness", "renewal_months": 36, "mandatory": True},
+    ],
+    "office": [
+        {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+        {"type": "dse", "title": "DSE Assessment", "description": "Display screen equipment assessment", "renewal_months": 24, "mandatory": True},
+        {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid", "renewal_months": 36, "mandatory": True},
+        {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire warden training", "renewal_months": 12, "mandatory": True},
+        {"type": "gdpr", "title": "GDPR Training", "description": "Data protection awareness", "renewal_months": 12, "mandatory": True},
+        {"type": "health_safety", "title": "Health & Safety", "description": "Office H&S awareness", "renewal_months": 36, "mandatory": True},
+    ],
+}
+
+# Default requirements for sectors not specifically defined
+DEFAULT_EMPLOYEE_REQUIREMENTS = [
+    {"type": "right_to_work", "title": "Right to Work", "description": "Proof of eligibility to work in the UK", "renewal_months": None, "mandatory": True},
+    {"type": "first_aid", "title": "First Aid Certificate", "description": "Emergency first aid at work", "renewal_months": 36, "mandatory": True},
+    {"type": "fire_safety", "title": "Fire Safety Training", "description": "Fire awareness and evacuation", "renewal_months": 12, "mandatory": True},
+    {"type": "health_safety", "title": "Health & Safety", "description": "General H&S induction", "renewal_months": 36, "mandatory": True},
+]
+
+# ======================= COMPREHENSIVE COMPLIANCE DOCUMENTS =======================
+
 COMPLIANCE_DOCUMENTS = {
     "dental": [
-        {"id": "dental_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Comprehensive health and safety policy for dental practices", "is_mandatory": True, "version": "2.1"},
-        {"id": "dental_gdpr_001", "title": "GDPR Patient Data Policy", "category": "GDPR & Data Protection", "description": "Data protection policy compliant with UK GDPR for patient records", "is_mandatory": True, "version": "3.0"},
-        {"id": "dental_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Equal opportunities policy for dental practices", "is_mandatory": True, "version": "1.5"},
-        {"id": "dental_sg_001", "title": "Safeguarding Policy", "category": "Safeguarding", "description": "Child and vulnerable adult safeguarding procedures", "is_mandatory": True, "version": "2.0"},
-        {"id": "dental_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Patient complaints handling procedure", "is_mandatory": True, "version": "1.8"},
+        {"id": "dental_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Comprehensive health and safety policy for dental practices compliant with Health and Safety at Work Act 1974", "is_mandatory": True, "version": "2.1"},
+        {"id": "dental_gdpr_001", "title": "GDPR Patient Data Policy", "category": "GDPR & Data Protection", "description": "Data protection policy compliant with UK GDPR for patient records, including SAR procedures", "is_mandatory": True, "version": "3.0"},
+        {"id": "dental_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Equal opportunities policy compliant with Equality Act 2010", "is_mandatory": True, "version": "1.5"},
+        {"id": "dental_sg_001", "title": "Safeguarding Policy", "category": "Safeguarding", "description": "Child and vulnerable adult safeguarding procedures per CQC requirements", "is_mandatory": True, "version": "2.0"},
+        {"id": "dental_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "NHS complaints procedure (Local Authority Social Services and NHS Complaints Regulations 2009)", "is_mandatory": True, "version": "1.8"},
         {"id": "dental_ra_001", "title": "Clinical Risk Assessment", "category": "Risk Assessments", "description": "Risk assessment template for dental procedures", "is_mandatory": True, "version": "2.2"},
-        {"id": "dental_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Employee handbook for dental practice staff", "is_mandatory": True, "version": "4.0"},
-        {"id": "dental_mp_001", "title": "CQC Registration Poster", "category": "Mandatory Posters", "description": "CQC registration display requirements", "is_mandatory": True, "version": "1.0"},
-        {"id": "dental_rg_001", "title": "CQC Compliance Guide", "category": "Regulatory Guidance", "description": "Guide to CQC fundamental standards for dental", "is_mandatory": False, "version": "2.5"},
-        {"id": "dental_ra_002", "title": "Infection Control Risk Assessment", "category": "Risk Assessments", "description": "HTM 01-05 compliant infection control assessment", "is_mandatory": True, "version": "3.1"},
+        {"id": "dental_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Employee handbook covering contracts, policies, and GDC standards", "is_mandatory": True, "version": "4.0"},
+        {"id": "dental_mp_001", "title": "CQC Registration Certificate", "category": "Mandatory Posters", "description": "CQC registration display requirements", "is_mandatory": True, "version": "1.0"},
+        {"id": "dental_rg_001", "title": "CQC Fundamental Standards Guide", "category": "Regulatory Guidance", "description": "Guide to CQC's 5 key questions: Safe, Effective, Caring, Responsive, Well-led", "is_mandatory": True, "version": "2.5"},
+        {"id": "dental_ic_001", "title": "Infection Control Policy (HTM 01-05)", "category": "Infection Control", "description": "Decontamination in primary care dental practices per HTM 01-05", "is_mandatory": True, "version": "3.1"},
+        {"id": "dental_ra_002", "title": "Sharps & Needlestick Injury Protocol", "category": "Risk Assessments", "description": "Sharps injury prevention and post-exposure management", "is_mandatory": True, "version": "2.0"},
+        {"id": "dental_rg_002", "title": "GDC Standards Guidance", "category": "Regulatory Guidance", "description": "General Dental Council Standards for the Dental Team", "is_mandatory": True, "version": "1.5"},
+        {"id": "dental_fire_001", "title": "Fire Safety Policy", "category": "Fire Safety", "description": "Fire risk assessment and evacuation procedures", "is_mandatory": True, "version": "2.0"},
     ],
     "healthcare": [
         {"id": "health_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "NHS compliant health and safety policy", "is_mandatory": True, "version": "3.0"},
-        {"id": "health_gdpr_001", "title": "Data Protection Policy", "category": "GDPR & Data Protection", "description": "UK GDPR compliant data protection policy", "is_mandatory": True, "version": "2.5"},
-        {"id": "health_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "NHS equality framework compliant policy", "is_mandatory": True, "version": "2.0"},
-        {"id": "health_sg_001", "title": "Safeguarding Policy", "category": "Safeguarding", "description": "Adult and child safeguarding procedures", "is_mandatory": True, "version": "3.0"},
-        {"id": "health_cp_001", "title": "Complaints Policy", "category": "Complaints Procedures", "description": "NHS complaints procedure template", "is_mandatory": True, "version": "2.2"},
-        {"id": "health_ra_001", "title": "Clinical Risk Assessment", "category": "Risk Assessments", "description": "Healthcare risk assessment framework", "is_mandatory": True, "version": "2.8"},
-        {"id": "health_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Healthcare worker handbook", "is_mandatory": True, "version": "4.5"},
+        {"id": "health_gdpr_001", "title": "Data Protection Policy", "category": "GDPR & Data Protection", "description": "UK GDPR and Caldicott principles compliant policy", "is_mandatory": True, "version": "2.5"},
+        {"id": "health_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "NHS equality framework compliant policy with EDS2 alignment", "is_mandatory": True, "version": "2.0"},
+        {"id": "health_sg_001", "title": "Safeguarding Policy", "category": "Safeguarding", "description": "Adult and child safeguarding per Care Act 2014 and Children Act 2004", "is_mandatory": True, "version": "3.0"},
+        {"id": "health_cp_001", "title": "Complaints Policy", "category": "Complaints Procedures", "description": "NHS complaints procedure with PALS guidance", "is_mandatory": True, "version": "2.2"},
+        {"id": "health_ra_001", "title": "Clinical Risk Assessment Framework", "category": "Risk Assessments", "description": "NHS clinical risk management framework", "is_mandatory": True, "version": "2.8"},
+        {"id": "health_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Healthcare worker handbook including NHS employment standards", "is_mandatory": True, "version": "4.5"},
         {"id": "health_mp_001", "title": "Health & Safety Law Poster", "category": "Mandatory Posters", "description": "HSE approved poster", "is_mandatory": True, "version": "1.0"},
-        {"id": "health_rg_001", "title": "CQC Compliance Guide", "category": "Regulatory Guidance", "description": "Complete CQC compliance guidance", "is_mandatory": False, "version": "3.0"},
+        {"id": "health_rg_001", "title": "CQC Key Lines of Enquiry", "category": "Regulatory Guidance", "description": "Complete CQC KLOEs and quality statements", "is_mandatory": True, "version": "3.0"},
+        {"id": "health_ic_001", "title": "Infection Prevention & Control Policy", "category": "Infection Control", "description": "IPC policy aligned with NHS England guidance", "is_mandatory": True, "version": "3.5"},
+        {"id": "health_dols_001", "title": "Mental Capacity & DoLS Policy", "category": "Regulatory Guidance", "description": "Mental Capacity Act 2005 and Deprivation of Liberty Safeguards", "is_mandatory": True, "version": "2.0"},
     ],
     "care_home": [
         {"id": "care_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Care home health and safety policy", "is_mandatory": True, "version": "2.5"},
-        {"id": "care_gdpr_001", "title": "Resident Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for resident information", "is_mandatory": True, "version": "2.0"},
-        {"id": "care_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Care sector equality policy", "is_mandatory": True, "version": "1.8"},
-        {"id": "care_sg_001", "title": "Safeguarding Adults Policy", "category": "Safeguarding", "description": "Adult safeguarding and protection procedures", "is_mandatory": True, "version": "3.5"},
+        {"id": "care_gdpr_001", "title": "Resident Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for resident personal and medical information", "is_mandatory": True, "version": "2.0"},
+        {"id": "care_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Care sector equality and human rights policy", "is_mandatory": True, "version": "1.8"},
+        {"id": "care_sg_001", "title": "Safeguarding Adults Policy", "category": "Safeguarding", "description": "Adult safeguarding per Care Act 2014 s42-46", "is_mandatory": True, "version": "3.5"},
         {"id": "care_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Resident and family complaints handling", "is_mandatory": True, "version": "2.0"},
-        {"id": "care_ra_001", "title": "Moving & Handling Risk Assessment", "category": "Risk Assessments", "description": "Manual handling risk assessment template", "is_mandatory": True, "version": "2.2"},
-        {"id": "care_sh_001", "title": "Care Worker Handbook", "category": "Staff Handbook", "description": "Staff handbook for care workers", "is_mandatory": True, "version": "3.5"},
-        {"id": "care_mp_001", "title": "CQC Rating Display", "category": "Mandatory Posters", "description": "CQC rating display requirements", "is_mandatory": True, "version": "1.0"},
-        {"id": "care_rg_001", "title": "CQC Key Lines of Enquiry", "category": "Regulatory Guidance", "description": "CQC inspection framework guide", "is_mandatory": False, "version": "2.8"},
+        {"id": "care_ra_001", "title": "Moving & Handling Risk Assessment", "category": "Risk Assessments", "description": "LOLER and manual handling assessment", "is_mandatory": True, "version": "2.2"},
+        {"id": "care_sh_001", "title": "Care Worker Handbook", "category": "Staff Handbook", "description": "Staff handbook including Care Certificate standards", "is_mandatory": True, "version": "3.5"},
+        {"id": "care_mp_001", "title": "CQC Rating Display", "category": "Mandatory Posters", "description": "CQC rating and registration certificate display", "is_mandatory": True, "version": "1.0"},
+        {"id": "care_rg_001", "title": "CQC Single Assessment Framework", "category": "Regulatory Guidance", "description": "CQC inspection framework and quality statements", "is_mandatory": True, "version": "2.8"},
+        {"id": "care_dols_001", "title": "DoLS & Mental Capacity Policy", "category": "Regulatory Guidance", "description": "Deprivation of Liberty Safeguards procedures", "is_mandatory": True, "version": "2.5"},
+        {"id": "care_med_001", "title": "Medication Management Policy", "category": "Regulatory Guidance", "description": "Safe handling, storage, and administration of medicines", "is_mandatory": True, "version": "3.0"},
+        {"id": "care_falls_001", "title": "Falls Prevention Policy", "category": "Risk Assessments", "description": "Falls risk assessment and prevention strategy", "is_mandatory": True, "version": "2.0"},
+    ],
+    "veterinary": [
+        {"id": "vet_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Veterinary practice H&S policy including animal handling risks", "is_mandatory": True, "version": "2.5"},
+        {"id": "vet_gdpr_001", "title": "Client Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for client and animal records", "is_mandatory": True, "version": "2.0"},
+        {"id": "vet_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Equal opportunities policy", "is_mandatory": True, "version": "1.5"},
+        {"id": "vet_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Client complaints handling aligned with RCVS guidance", "is_mandatory": True, "version": "1.8"},
+        {"id": "vet_ra_001", "title": "Clinical Risk Assessment", "category": "Risk Assessments", "description": "Veterinary clinical and zoonotic risk assessment", "is_mandatory": True, "version": "2.2"},
+        {"id": "vet_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Employee handbook including RCVS Code of Conduct", "is_mandatory": True, "version": "3.0"},
+        {"id": "vet_rg_001", "title": "RCVS Practice Standards", "category": "Regulatory Guidance", "description": "RCVS Practice Standards Scheme requirements", "is_mandatory": True, "version": "2.5"},
+        {"id": "vet_cd_001", "title": "Controlled Drugs Policy", "category": "Regulatory Guidance", "description": "Veterinary medicines and controlled drugs handling", "is_mandatory": True, "version": "2.0"},
+        {"id": "vet_ic_001", "title": "Infection Control Policy", "category": "Infection Control", "description": "Biosecurity and infection prevention", "is_mandatory": True, "version": "2.0"},
+        {"id": "vet_rad_001", "title": "Radiation Protection Policy", "category": "Health & Safety", "description": "IR(ME)R and ionising radiation safety", "is_mandatory": True, "version": "1.5"},
+    ],
+    "nursery": [
+        {"id": "nur_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Early years health and safety policy", "is_mandatory": True, "version": "3.0"},
+        {"id": "nur_gdpr_001", "title": "Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for children's records and photographs", "is_mandatory": True, "version": "2.5"},
+        {"id": "nur_eq_001", "title": "Equality & Inclusion Policy", "category": "Equality & Diversity", "description": "SEND and equality policy for early years", "is_mandatory": True, "version": "2.0"},
+        {"id": "nur_sg_001", "title": "Child Safeguarding Policy", "category": "Safeguarding", "description": "Safeguarding children per Working Together 2023 and KCSIE", "is_mandatory": True, "version": "4.0"},
+        {"id": "nur_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Parent complaints handling", "is_mandatory": True, "version": "2.0"},
+        {"id": "nur_ra_001", "title": "Daily Risk Assessments", "category": "Risk Assessments", "description": "Indoor and outdoor activity risk assessments", "is_mandatory": True, "version": "2.5"},
+        {"id": "nur_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "EYFS requirements and staff conduct", "is_mandatory": True, "version": "3.5"},
+        {"id": "nur_rg_001", "title": "Ofsted Requirements Guide", "category": "Regulatory Guidance", "description": "Early Years Inspection Framework guidance", "is_mandatory": True, "version": "3.0"},
+        {"id": "nur_prevent_001", "title": "Prevent Duty Policy", "category": "Safeguarding", "description": "Counter-terrorism and British values", "is_mandatory": True, "version": "2.0"},
+        {"id": "nur_food_001", "title": "Food Safety Policy", "category": "Food Safety", "description": "Food hygiene and allergy management", "is_mandatory": True, "version": "2.5"},
+        {"id": "nur_eyfs_001", "title": "EYFS Curriculum Policy", "category": "Regulatory Guidance", "description": "Early Years Foundation Stage delivery", "is_mandatory": True, "version": "2.0"},
+    ],
+    "education": [
+        {"id": "edu_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "School/college H&S policy", "is_mandatory": True, "version": "3.0"},
+        {"id": "edu_gdpr_001", "title": "Student Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for student records and consent", "is_mandatory": True, "version": "2.5"},
+        {"id": "edu_eq_001", "title": "Equality & Accessibility Plan", "category": "Equality & Diversity", "description": "Public Sector Equality Duty compliance", "is_mandatory": True, "version": "2.0"},
+        {"id": "edu_sg_001", "title": "Child Protection Policy", "category": "Safeguarding", "description": "Keeping Children Safe in Education 2024 compliant", "is_mandatory": True, "version": "4.0"},
+        {"id": "edu_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Parent and student complaints procedure", "is_mandatory": True, "version": "2.2"},
+        {"id": "edu_ra_001", "title": "Educational Visit Risk Assessment", "category": "Risk Assessments", "description": "School trip and activity risk assessments", "is_mandatory": True, "version": "2.8"},
+        {"id": "edu_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Staff code of conduct and professional standards", "is_mandatory": True, "version": "3.5"},
+        {"id": "edu_rg_001", "title": "Ofsted Framework Guide", "category": "Regulatory Guidance", "description": "Education Inspection Framework guidance", "is_mandatory": True, "version": "3.0"},
+        {"id": "edu_prevent_001", "title": "Prevent Duty Policy", "category": "Safeguarding", "description": "Counter-terrorism duty in education", "is_mandatory": True, "version": "2.5"},
+        {"id": "edu_behaviour_001", "title": "Behaviour Policy", "category": "Regulatory Guidance", "description": "Behaviour in schools guidance compliance", "is_mandatory": True, "version": "2.0"},
     ],
     "construction": [
-        {"id": "const_hs_001", "title": "Construction Health & Safety Policy", "category": "Health & Safety", "description": "CDM 2015 compliant H&S policy", "is_mandatory": True, "version": "3.2"},
-        {"id": "const_gdpr_001", "title": "Employee Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for construction businesses", "is_mandatory": True, "version": "1.5"},
+        {"id": "const_hs_001", "title": "Construction H&S Policy", "category": "Health & Safety", "description": "CDM 2015 compliant health and safety policy", "is_mandatory": True, "version": "3.2"},
+        {"id": "const_gdpr_001", "title": "Employee Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for workforce data", "is_mandatory": True, "version": "1.5"},
         {"id": "const_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Construction industry equality policy", "is_mandatory": True, "version": "1.8"},
-        {"id": "const_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Client complaints handling procedure", "is_mandatory": True, "version": "1.5"},
-        {"id": "const_ra_001", "title": "Site Risk Assessment", "category": "Risk Assessments", "description": "Construction site risk assessment template", "is_mandatory": True, "version": "4.0"},
+        {"id": "const_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Client and subcontractor complaints", "is_mandatory": True, "version": "1.5"},
+        {"id": "const_ra_001", "title": "Site Risk Assessment", "category": "Risk Assessments", "description": "CDM principal contractor risk assessment", "is_mandatory": True, "version": "4.0"},
         {"id": "const_ra_002", "title": "COSHH Assessment", "category": "Risk Assessments", "description": "Hazardous substances assessment", "is_mandatory": True, "version": "2.5"},
-        {"id": "const_sh_001", "title": "Site Worker Handbook", "category": "Staff Handbook", "description": "Construction worker safety handbook", "is_mandatory": True, "version": "3.0"},
-        {"id": "const_mp_001", "title": "HSE Construction Poster", "category": "Mandatory Posters", "description": "Health and safety law poster for sites", "is_mandatory": True, "version": "1.0"},
-        {"id": "const_rg_001", "title": "HSE CDM Guide", "category": "Regulatory Guidance", "description": "HSE CDM 2015 compliance guide", "is_mandatory": False, "version": "2.0"},
+        {"id": "const_sh_001", "title": "Site Worker Handbook", "category": "Staff Handbook", "description": "Construction worker safety rules and induction", "is_mandatory": True, "version": "3.0"},
+        {"id": "const_rg_001", "title": "HSE CDM 2015 Guide", "category": "Regulatory Guidance", "description": "Construction Design and Management Regulations guidance", "is_mandatory": True, "version": "2.0"},
+        {"id": "const_asb_001", "title": "Asbestos Management Plan", "category": "Health & Safety", "description": "Control of Asbestos Regulations 2012 compliance", "is_mandatory": True, "version": "2.5"},
+        {"id": "const_method_001", "title": "Method Statement Templates", "category": "Risk Assessments", "description": "Safe system of work templates", "is_mandatory": True, "version": "2.0"},
+        {"id": "const_env_001", "title": "Environmental Policy", "category": "Environmental", "description": "Site waste management and environmental protection", "is_mandatory": True, "version": "2.0"},
     ],
     "hospitality": [
         {"id": "hosp_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Hospitality sector H&S policy", "is_mandatory": True, "version": "2.8"},
-        {"id": "hosp_gdpr_001", "title": "Customer Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for guest data", "is_mandatory": True, "version": "2.0"},
-        {"id": "hosp_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Hospitality equality and inclusion policy", "is_mandatory": True, "version": "1.5"},
-        {"id": "hosp_cp_001", "title": "Guest Complaints Procedure", "category": "Complaints Procedures", "description": "Guest complaints handling procedure", "is_mandatory": True, "version": "2.2"},
-        {"id": "hosp_ra_001", "title": "Food Safety Risk Assessment", "category": "Risk Assessments", "description": "HACCP compliant food safety assessment", "is_mandatory": True, "version": "3.5"},
-        {"id": "hosp_ra_002", "title": "Fire Risk Assessment", "category": "Risk Assessments", "description": "Fire safety risk assessment template", "is_mandatory": True, "version": "2.0"},
+        {"id": "hosp_gdpr_001", "title": "Guest Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for guest data and CCTV", "is_mandatory": True, "version": "2.0"},
+        {"id": "hosp_eq_001", "title": "Equality & Accessibility Policy", "category": "Equality & Diversity", "description": "Accessible premises and services", "is_mandatory": True, "version": "1.5"},
+        {"id": "hosp_cp_001", "title": "Guest Complaints Procedure", "category": "Complaints Procedures", "description": "Guest complaints and feedback handling", "is_mandatory": True, "version": "2.2"},
+        {"id": "hosp_ra_001", "title": "Food Safety Risk Assessment", "category": "Food Safety", "description": "HACCP-based food safety management", "is_mandatory": True, "version": "3.5"},
+        {"id": "hosp_fire_001", "title": "Fire Safety Policy", "category": "Fire Safety", "description": "Fire risk assessment and evacuation per Regulatory Reform Order 2005", "is_mandatory": True, "version": "2.0"},
         {"id": "hosp_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Hospitality staff handbook", "is_mandatory": True, "version": "3.2"},
-        {"id": "hosp_mp_001", "title": "Food Hygiene Rating", "category": "Mandatory Posters", "description": "Food hygiene rating display requirements", "is_mandatory": True, "version": "1.0"},
-        {"id": "hosp_rg_001", "title": "Environmental Health Guide", "category": "Regulatory Guidance", "description": "EHO inspection preparation guide", "is_mandatory": False, "version": "2.5"},
+        {"id": "hosp_allergen_001", "title": "Allergen Management Policy", "category": "Food Safety", "description": "14 allergens compliance and Natasha's Law", "is_mandatory": True, "version": "2.5"},
+        {"id": "hosp_lic_001", "title": "Licensing Compliance Guide", "category": "Regulatory Guidance", "description": "Premises licence and licensing objectives", "is_mandatory": True, "version": "2.0"},
+    ],
+    "restaurant": [
+        {"id": "rest_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Restaurant H&S policy", "is_mandatory": True, "version": "2.5"},
+        {"id": "rest_gdpr_001", "title": "Customer Data Policy", "category": "GDPR & Data Protection", "description": "Booking and payment data protection", "is_mandatory": True, "version": "2.0"},
+        {"id": "rest_food_001", "title": "Food Safety Management System", "category": "Food Safety", "description": "HACCP and Safer Food Better Business", "is_mandatory": True, "version": "3.0"},
+        {"id": "rest_allergen_001", "title": "Allergen Policy", "category": "Food Safety", "description": "Allergen information and cross-contamination prevention", "is_mandatory": True, "version": "2.5"},
+        {"id": "rest_fire_001", "title": "Fire Safety Policy", "category": "Fire Safety", "description": "Kitchen fire safety and evacuation", "is_mandatory": True, "version": "2.0"},
+        {"id": "rest_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Restaurant staff policies", "is_mandatory": True, "version": "2.5"},
+        {"id": "rest_rg_001", "title": "Food Hygiene Rating Guide", "category": "Regulatory Guidance", "description": "Achieving and maintaining 5-star rating", "is_mandatory": True, "version": "2.0"},
     ],
     "retail": [
         {"id": "ret_hs_001", "title": "Retail Health & Safety Policy", "category": "Health & Safety", "description": "Retail sector H&S policy", "is_mandatory": True, "version": "2.5"},
-        {"id": "ret_gdpr_001", "title": "Customer Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for retail customer data", "is_mandatory": True, "version": "2.2"},
-        {"id": "ret_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Retail equality policy", "is_mandatory": True, "version": "1.8"},
-        {"id": "ret_cp_001", "title": "Customer Complaints Policy", "category": "Complaints Procedures", "description": "Customer complaints handling procedure", "is_mandatory": True, "version": "2.0"},
-        {"id": "ret_ra_001", "title": "Store Risk Assessment", "category": "Risk Assessments", "description": "Retail store risk assessment template", "is_mandatory": True, "version": "2.5"},
+        {"id": "ret_gdpr_001", "title": "Customer Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR for retail customers and loyalty schemes", "is_mandatory": True, "version": "2.2"},
+        {"id": "ret_eq_001", "title": "Equality & Accessibility Policy", "category": "Equality & Diversity", "description": "Accessible retail premises", "is_mandatory": True, "version": "1.8"},
+        {"id": "ret_cp_001", "title": "Customer Complaints Policy", "category": "Complaints Procedures", "description": "Returns, refunds, and complaints", "is_mandatory": True, "version": "2.0"},
+        {"id": "ret_ra_001", "title": "Store Risk Assessment", "category": "Risk Assessments", "description": "Retail premises risk assessment", "is_mandatory": True, "version": "2.5"},
         {"id": "ret_sh_001", "title": "Retail Staff Handbook", "category": "Staff Handbook", "description": "Employee handbook for retail staff", "is_mandatory": True, "version": "3.0"},
-        {"id": "ret_mp_001", "title": "Consumer Rights Poster", "category": "Mandatory Posters", "description": "Consumer rights display requirements", "is_mandatory": True, "version": "1.0"},
-        {"id": "ret_rg_001", "title": "Trading Standards Guide", "category": "Regulatory Guidance", "description": "Trading standards compliance guide", "is_mandatory": False, "version": "2.0"},
-    ],
-    "education": [
-        {"id": "edu_hs_001", "title": "Education Health & Safety Policy", "category": "Health & Safety", "description": "School/college H&S policy", "is_mandatory": True, "version": "3.0"},
-        {"id": "edu_gdpr_001", "title": "Student Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR policy for student records", "is_mandatory": True, "version": "2.5"},
-        {"id": "edu_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Education sector equality policy", "is_mandatory": True, "version": "2.0"},
-        {"id": "edu_sg_001", "title": "Child Safeguarding Policy", "category": "Safeguarding", "description": "Keeping Children Safe in Education compliant", "is_mandatory": True, "version": "4.0"},
-        {"id": "edu_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Parent/student complaints procedure", "is_mandatory": True, "version": "2.2"},
-        {"id": "edu_ra_001", "title": "Educational Trip Risk Assessment", "category": "Risk Assessments", "description": "School trip risk assessment template", "is_mandatory": True, "version": "2.8"},
-        {"id": "edu_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Teaching staff handbook", "is_mandatory": True, "version": "3.5"},
-        {"id": "edu_mp_001", "title": "Ofsted Rating Display", "category": "Mandatory Posters", "description": "Ofsted rating display requirements", "is_mandatory": True, "version": "1.0"},
-        {"id": "edu_rg_001", "title": "Ofsted Framework Guide", "category": "Regulatory Guidance", "description": "Ofsted inspection framework guide", "is_mandatory": False, "version": "3.0"},
+        {"id": "ret_rg_001", "title": "Trading Standards Guide", "category": "Regulatory Guidance", "description": "Consumer Rights Act 2015 compliance", "is_mandatory": True, "version": "2.0"},
+        {"id": "ret_fire_001", "title": "Fire Safety Policy", "category": "Fire Safety", "description": "Retail fire safety and evacuation", "is_mandatory": True, "version": "2.0"},
     ],
     "office": [
-        {"id": "off_hs_001", "title": "Office Health & Safety Policy", "category": "Health & Safety", "description": "Office/professional services H&S policy", "is_mandatory": True, "version": "2.5"},
+        {"id": "off_hs_001", "title": "Office Health & Safety Policy", "category": "Health & Safety", "description": "Office and professional services H&S policy", "is_mandatory": True, "version": "2.5"},
         {"id": "off_gdpr_001", "title": "Data Protection Policy", "category": "GDPR & Data Protection", "description": "UK GDPR policy for professional services", "is_mandatory": True, "version": "2.8"},
         {"id": "off_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Office equality and inclusion policy", "is_mandatory": True, "version": "2.0"},
-        {"id": "off_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Client complaints handling procedure", "is_mandatory": True, "version": "1.8"},
+        {"id": "off_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Client complaints handling", "is_mandatory": True, "version": "1.8"},
         {"id": "off_ra_001", "title": "DSE Risk Assessment", "category": "Risk Assessments", "description": "Display screen equipment assessment", "is_mandatory": True, "version": "2.2"},
-        {"id": "off_ra_002", "title": "Office Fire Risk Assessment", "category": "Risk Assessments", "description": "Fire safety risk assessment for offices", "is_mandatory": True, "version": "2.0"},
+        {"id": "off_fire_001", "title": "Fire Safety Policy", "category": "Fire Safety", "description": "Office fire risk assessment and evacuation", "is_mandatory": True, "version": "2.0"},
         {"id": "off_sh_001", "title": "Employee Handbook", "category": "Staff Handbook", "description": "Professional services staff handbook", "is_mandatory": True, "version": "3.5"},
-        {"id": "off_mp_001", "title": "Health & Safety Law Poster", "category": "Mandatory Posters", "description": "HSE approved office poster", "is_mandatory": True, "version": "1.0"},
-        {"id": "off_rg_001", "title": "ICO GDPR Guide", "category": "Regulatory Guidance", "description": "ICO UK GDPR compliance guide", "is_mandatory": False, "version": "2.5"},
-    ]
+        {"id": "off_rg_001", "title": "ICO GDPR Guide", "category": "Regulatory Guidance", "description": "Information Commissioner's Office guidance", "is_mandatory": True, "version": "2.5"},
+        {"id": "off_wfh_001", "title": "Remote Working Policy", "category": "Health & Safety", "description": "Home working health and safety", "is_mandatory": True, "version": "2.0"},
+    ],
+    "salon": [
+        {"id": "salon_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Salon H&S policy", "is_mandatory": True, "version": "2.5"},
+        {"id": "salon_gdpr_001", "title": "Client Data Protection Policy", "category": "GDPR & Data Protection", "description": "GDPR for client records and photos", "is_mandatory": True, "version": "2.0"},
+        {"id": "salon_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Client complaints handling", "is_mandatory": True, "version": "1.5"},
+        {"id": "salon_ic_001", "title": "Hygiene & Infection Control", "category": "Infection Control", "description": "Tool sterilisation and hygiene protocols", "is_mandatory": True, "version": "2.5"},
+        {"id": "salon_ra_001", "title": "Treatment Risk Assessments", "category": "Risk Assessments", "description": "Risk assessments for salon treatments", "is_mandatory": True, "version": "2.0"},
+        {"id": "salon_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Salon employee handbook", "is_mandatory": True, "version": "2.5"},
+        {"id": "salon_coshh_001", "title": "COSHH Assessment", "category": "Health & Safety", "description": "Chemical product risk assessment", "is_mandatory": True, "version": "2.0"},
+    ],
+    "cleaning": [
+        {"id": "clean_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Cleaning services H&S policy", "is_mandatory": True, "version": "2.5"},
+        {"id": "clean_gdpr_001", "title": "Data Protection Policy", "category": "GDPR & Data Protection", "description": "Client premises access and data handling", "is_mandatory": True, "version": "1.5"},
+        {"id": "clean_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Client complaints handling", "is_mandatory": True, "version": "1.5"},
+        {"id": "clean_coshh_001", "title": "COSHH Assessment", "category": "Health & Safety", "description": "Cleaning chemicals risk assessment", "is_mandatory": True, "version": "2.5"},
+        {"id": "clean_mh_001", "title": "Manual Handling Policy", "category": "Health & Safety", "description": "Safe lifting and equipment use", "is_mandatory": True, "version": "2.0"},
+        {"id": "clean_sh_001", "title": "Staff Handbook", "category": "Staff Handbook", "description": "Cleaning staff handbook", "is_mandatory": True, "version": "2.0"},
+    ],
+    "security": [
+        {"id": "sec_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "Security services H&S policy", "is_mandatory": True, "version": "2.5"},
+        {"id": "sec_gdpr_001", "title": "Data Protection & CCTV Policy", "category": "GDPR & Data Protection", "description": "GDPR and surveillance camera code compliance", "is_mandatory": True, "version": "2.5"},
+        {"id": "sec_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Non-discriminatory security practices", "is_mandatory": True, "version": "2.0"},
+        {"id": "sec_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Public complaints handling", "is_mandatory": True, "version": "1.5"},
+        {"id": "sec_ra_001", "title": "Violence & Aggression Risk Assessment", "category": "Risk Assessments", "description": "Lone working and conflict situations", "is_mandatory": True, "version": "2.5"},
+        {"id": "sec_sh_001", "title": "Security Officer Handbook", "category": "Staff Handbook", "description": "SIA licence holder handbook", "is_mandatory": True, "version": "2.5"},
+        {"id": "sec_rg_001", "title": "SIA Compliance Guide", "category": "Regulatory Guidance", "description": "Security Industry Authority requirements", "is_mandatory": True, "version": "2.0"},
+    ],
 }
+
+# Default documents for sectors not specifically defined
+DEFAULT_COMPLIANCE_DOCUMENTS = [
+    {"id": "gen_hs_001", "title": "Health & Safety Policy", "category": "Health & Safety", "description": "General workplace health and safety policy", "is_mandatory": True, "version": "2.0"},
+    {"id": "gen_gdpr_001", "title": "Data Protection Policy", "category": "GDPR & Data Protection", "description": "UK GDPR compliance policy", "is_mandatory": True, "version": "2.0"},
+    {"id": "gen_eq_001", "title": "Equality & Diversity Policy", "category": "Equality & Diversity", "description": "Equal opportunities policy", "is_mandatory": True, "version": "1.5"},
+    {"id": "gen_cp_001", "title": "Complaints Procedure", "category": "Complaints Procedures", "description": "Customer and employee complaints handling", "is_mandatory": True, "version": "1.5"},
+    {"id": "gen_ra_001", "title": "Workplace Risk Assessment", "category": "Risk Assessments", "description": "General workplace risk assessment template", "is_mandatory": True, "version": "2.0"},
+    {"id": "gen_fire_001", "title": "Fire Safety Policy", "category": "Fire Safety", "description": "Fire risk assessment and evacuation", "is_mandatory": True, "version": "2.0"},
+    {"id": "gen_sh_001", "title": "Employee Handbook", "category": "Staff Handbook", "description": "General employee handbook", "is_mandatory": True, "version": "2.5"},
+    {"id": "gen_mp_001", "title": "Health & Safety Law Poster", "category": "Mandatory Posters", "description": "HSE approved poster", "is_mandatory": True, "version": "1.0"},
+]
 
 # ======================= AUTH ROUTES =======================
 
@@ -382,7 +736,6 @@ async def create_business(business_data: BusinessCreate, current_user: dict = De
     }
     await db.businesses.insert_one(business)
     
-    # Generate compliance checklist for this business
     await generate_compliance_checklist(business_id, business_data.sector)
     
     return BusinessResponse(**{k: v for k, v in business.items() if k != "_id"})
@@ -410,7 +763,6 @@ async def update_business(business_data: BusinessCreate, current_user: dict = De
         "phone": business_data.phone
     }
     
-    # If sector changed, regenerate checklist
     if business["sector"] != business_data.sector:
         await db.checklists.delete_many({"business_id": business["id"]})
         await generate_compliance_checklist(business["id"], business_data.sector)
@@ -422,7 +774,7 @@ async def update_business(business_data: BusinessCreate, current_user: dict = De
 # ======================= COMPLIANCE CHECKLIST ROUTES =======================
 
 async def generate_compliance_checklist(business_id: str, sector: str):
-    documents = COMPLIANCE_DOCUMENTS.get(sector, [])
+    documents = COMPLIANCE_DOCUMENTS.get(sector, DEFAULT_COMPLIANCE_DOCUMENTS)
     now = datetime.now(timezone.utc)
     
     for doc in documents:
@@ -483,7 +835,7 @@ async def get_documents(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Business not found. Please complete onboarding.")
     
     sector = business["sector"]
-    documents = COMPLIANCE_DOCUMENTS.get(sector, [])
+    documents = COMPLIANCE_DOCUMENTS.get(sector, DEFAULT_COMPLIANCE_DOCUMENTS)
     
     return [DocumentResponse(
         id=doc["id"],
@@ -504,7 +856,7 @@ async def get_document(document_id: str, current_user: dict = Depends(get_curren
         raise HTTPException(status_code=404, detail="Business not found")
     
     sector = business["sector"]
-    documents = COMPLIANCE_DOCUMENTS.get(sector, [])
+    documents = COMPLIANCE_DOCUMENTS.get(sector, DEFAULT_COMPLIANCE_DOCUMENTS)
     
     doc = next((d for d in documents if d["id"] == document_id), None)
     if not doc:
@@ -521,6 +873,319 @@ async def get_document(document_id: str, current_user: dict = Depends(get_curren
         last_updated=datetime.now(timezone.utc).isoformat(),
         is_mandatory=doc["is_mandatory"]
     )
+
+# ======================= EMPLOYEE ROUTES =======================
+
+@api_router.post("/employees", response_model=EmployeeResponse)
+async def create_employee(employee_data: EmployeeCreate, current_user: dict = Depends(get_current_user)):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found. Please complete onboarding.")
+    
+    employee_id = str(uuid.uuid4())
+    employee = {
+        "id": employee_id,
+        "business_id": business["id"],
+        "first_name": employee_data.first_name,
+        "last_name": employee_data.last_name,
+        "email": employee_data.email,
+        "job_title": employee_data.job_title,
+        "department": employee_data.department,
+        "start_date": employee_data.start_date,
+        "phone": employee_data.phone,
+        "emergency_contact": employee_data.emergency_contact,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.employees.insert_one(employee)
+    
+    # Auto-generate required compliance items for the employee based on sector
+    sector = business["sector"]
+    requirements = EMPLOYEE_REQUIREMENTS.get(sector, DEFAULT_EMPLOYEE_REQUIREMENTS)
+    
+    for req in requirements:
+        requirement = {
+            "id": str(uuid.uuid4()),
+            "employee_id": employee_id,
+            "requirement_type": req["type"],
+            "title": req["title"],
+            "description": req["description"],
+            "issue_date": None,
+            "expiry_date": None,
+            "reference_number": None,
+            "status": "pending",
+            "is_mandatory": req["mandatory"],
+            "renewal_months": req["renewal_months"],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.employee_requirements.insert_one(requirement)
+    
+    return EmployeeResponse(**{k: v for k, v in employee.items() if k != "_id"})
+
+@api_router.get("/employees", response_model=List[EmployeeResponse])
+async def get_employees(current_user: dict = Depends(get_current_user)):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found. Please complete onboarding.")
+    
+    employees = await db.employees.find({"business_id": business["id"]}, {"_id": 0}).to_list(1000)
+    
+    # Add compliance summary for each employee
+    result = []
+    for emp in employees:
+        requirements = await db.employee_requirements.find({"employee_id": emp["id"]}, {"_id": 0}).to_list(100)
+        
+        total = len(requirements)
+        valid = sum(1 for r in requirements if r["status"] == "valid")
+        expired = sum(1 for r in requirements if r["status"] == "expired")
+        expiring = sum(1 for r in requirements if r["status"] == "expiring_soon")
+        pending = sum(1 for r in requirements if r["status"] == "pending")
+        
+        emp["compliance_summary"] = {
+            "total": total,
+            "valid": valid,
+            "expired": expired,
+            "expiring_soon": expiring,
+            "pending": pending,
+            "compliance_rate": round((valid / total * 100) if total > 0 else 0)
+        }
+        result.append(EmployeeResponse(**emp))
+    
+    return result
+
+@api_router.get("/employees/{employee_id}", response_model=EmployeeResponse)
+async def get_employee(employee_id: str, current_user: dict = Depends(get_current_user)):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    employee = await db.employees.find_one({"id": employee_id, "business_id": business["id"]}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    requirements = await db.employee_requirements.find({"employee_id": employee_id}, {"_id": 0}).to_list(100)
+    
+    total = len(requirements)
+    valid = sum(1 for r in requirements if r["status"] == "valid")
+    expired = sum(1 for r in requirements if r["status"] == "expired")
+    expiring = sum(1 for r in requirements if r["status"] == "expiring_soon")
+    pending = sum(1 for r in requirements if r["status"] == "pending")
+    
+    employee["compliance_summary"] = {
+        "total": total,
+        "valid": valid,
+        "expired": expired,
+        "expiring_soon": expiring,
+        "pending": pending,
+        "compliance_rate": round((valid / total * 100) if total > 0 else 0)
+    }
+    
+    return EmployeeResponse(**employee)
+
+@api_router.put("/employees/{employee_id}", response_model=EmployeeResponse)
+async def update_employee(employee_id: str, employee_data: EmployeeUpdate, current_user: dict = Depends(get_current_user)):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    employee = await db.employees.find_one({"id": employee_id, "business_id": business["id"]})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    update_data = {k: v for k, v in employee_data.model_dump().items() if v is not None}
+    
+    if update_data:
+        await db.employees.update_one({"id": employee_id}, {"$set": update_data})
+    
+    updated = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    return EmployeeResponse(**updated)
+
+@api_router.delete("/employees/{employee_id}")
+async def delete_employee(employee_id: str, current_user: dict = Depends(get_current_user)):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    employee = await db.employees.find_one({"id": employee_id, "business_id": business["id"]})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    # Delete employee requirements first
+    await db.employee_requirements.delete_many({"employee_id": employee_id})
+    await db.employees.delete_one({"id": employee_id})
+    
+    return {"message": "Employee deleted successfully"}
+
+# ======================= EMPLOYEE REQUIREMENTS ROUTES =======================
+
+@api_router.get("/employees/{employee_id}/requirements", response_model=List[EmployeeRequirementResponse])
+async def get_employee_requirements(employee_id: str, current_user: dict = Depends(get_current_user)):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    employee = await db.employees.find_one({"id": employee_id, "business_id": business["id"]})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    requirements = await db.employee_requirements.find({"employee_id": employee_id}, {"_id": 0}).to_list(100)
+    
+    result = []
+    for req in requirements:
+        status, days_until = calculate_requirement_status(req.get("expiry_date"))
+        req["status"] = status
+        req["days_until_expiry"] = days_until
+        result.append(EmployeeRequirementResponse(**req))
+    
+    return result
+
+@api_router.put("/employees/{employee_id}/requirements/{requirement_id}", response_model=EmployeeRequirementResponse)
+async def update_employee_requirement(
+    employee_id: str, 
+    requirement_id: str, 
+    requirement_data: EmployeeRequirementUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    employee = await db.employees.find_one({"id": employee_id, "business_id": business["id"]})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    requirement = await db.employee_requirements.find_one({"id": requirement_id, "employee_id": employee_id})
+    if not requirement:
+        raise HTTPException(status_code=404, detail="Requirement not found")
+    
+    update_data = {k: v for k, v in requirement_data.model_dump().items() if v is not None}
+    
+    # Auto-calculate status based on expiry date
+    if "expiry_date" in update_data:
+        status, _ = calculate_requirement_status(update_data["expiry_date"])
+        update_data["status"] = status
+    
+    if update_data:
+        await db.employee_requirements.update_one({"id": requirement_id}, {"$set": update_data})
+    
+    updated = await db.employee_requirements.find_one({"id": requirement_id}, {"_id": 0})
+    status, days_until = calculate_requirement_status(updated.get("expiry_date"))
+    updated["status"] = status
+    updated["days_until_expiry"] = days_until
+    
+    return EmployeeRequirementResponse(**updated)
+
+@api_router.post("/employees/{employee_id}/requirements", response_model=EmployeeRequirementResponse)
+async def add_employee_requirement(
+    employee_id: str,
+    requirement_data: EmployeeRequirementCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    employee = await db.employees.find_one({"id": employee_id, "business_id": business["id"]})
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    status, days_until = calculate_requirement_status(requirement_data.expiry_date)
+    
+    requirement = {
+        "id": str(uuid.uuid4()),
+        "employee_id": employee_id,
+        "requirement_type": requirement_data.requirement_type,
+        "title": requirement_data.title,
+        "description": requirement_data.description,
+        "issue_date": requirement_data.issue_date,
+        "expiry_date": requirement_data.expiry_date,
+        "reference_number": requirement_data.reference_number,
+        "status": status,
+        "is_mandatory": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.employee_requirements.insert_one(requirement)
+    
+    requirement["days_until_expiry"] = days_until
+    return EmployeeRequirementResponse(**{k: v for k, v in requirement.items() if k != "_id"})
+
+# ======================= EMPLOYEE COMPLIANCE OVERVIEW =======================
+
+@api_router.get("/employees/compliance/overview")
+async def get_employee_compliance_overview(current_user: dict = Depends(get_current_user)):
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    employees = await db.employees.find({"business_id": business["id"], "is_active": True}, {"_id": 0}).to_list(1000)
+    
+    total_employees = len(employees)
+    total_requirements = 0
+    valid_requirements = 0
+    expired_requirements = 0
+    expiring_requirements = 0
+    pending_requirements = 0
+    
+    overdue_items = []
+    expiring_soon_items = []
+    
+    for emp in employees:
+        requirements = await db.employee_requirements.find({"employee_id": emp["id"]}, {"_id": 0}).to_list(100)
+        
+        for req in requirements:
+            total_requirements += 1
+            status, days_until = calculate_requirement_status(req.get("expiry_date"))
+            
+            if status == "valid":
+                valid_requirements += 1
+            elif status == "expired":
+                expired_requirements += 1
+                overdue_items.append({
+                    "employee_name": f"{emp['first_name']} {emp['last_name']}",
+                    "employee_id": emp["id"],
+                    "requirement": req["title"],
+                    "requirement_id": req["id"],
+                    "expiry_date": req.get("expiry_date"),
+                    "days_overdue": abs(days_until) if days_until else None
+                })
+            elif status == "expiring_soon":
+                expiring_requirements += 1
+                expiring_soon_items.append({
+                    "employee_name": f"{emp['first_name']} {emp['last_name']}",
+                    "employee_id": emp["id"],
+                    "requirement": req["title"],
+                    "requirement_id": req["id"],
+                    "expiry_date": req.get("expiry_date"),
+                    "days_until_expiry": days_until
+                })
+            else:
+                pending_requirements += 1
+    
+    compliance_rate = round((valid_requirements / total_requirements * 100) if total_requirements > 0 else 0)
+    
+    return {
+        "total_employees": total_employees,
+        "total_requirements": total_requirements,
+        "valid_requirements": valid_requirements,
+        "expired_requirements": expired_requirements,
+        "expiring_soon_requirements": expiring_requirements,
+        "pending_requirements": pending_requirements,
+        "overall_compliance_rate": compliance_rate,
+        "overdue_items": sorted(overdue_items, key=lambda x: x.get("days_overdue") or 0, reverse=True)[:10],
+        "expiring_soon_items": sorted(expiring_soon_items, key=lambda x: x.get("days_until_expiry") or 999)[:10]
+    }
+
+@api_router.get("/employees/requirements/types")
+async def get_requirement_types(current_user: dict = Depends(get_current_user)):
+    """Get available requirement types for the business sector"""
+    business = await db.businesses.find_one({"user_id": current_user["id"]})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    sector = business["sector"]
+    requirements = EMPLOYEE_REQUIREMENTS.get(sector, DEFAULT_EMPLOYEE_REQUIREMENTS)
+    
+    return [{"type": req["type"], "title": req["title"], "description": req["description"]} for req in requirements]
 
 # ======================= NOTIFICATIONS ROUTES =======================
 
@@ -589,7 +1254,6 @@ async def create_checkout(checkout_data: CheckoutRequest, request: Request, curr
     
     session = await stripe_checkout.create_checkout_session(checkout_request)
     
-    # Create payment transaction record
     transaction = {
         "id": str(uuid.uuid4()),
         "session_id": session.session_id,
@@ -613,24 +1277,20 @@ async def get_checkout_status(session_id: str, request: Request, current_user: d
     
     status = await stripe_checkout.get_checkout_status(session_id)
     
-    # Update transaction status
     transaction = await db.payment_transactions.find_one({"session_id": session_id})
     
     if transaction and transaction["payment_status"] != "paid" and status.payment_status == "paid":
-        # Update transaction
         await db.payment_transactions.update_one(
             {"session_id": session_id},
             {"$set": {"payment_status": "paid", "completed_at": datetime.now(timezone.utc).isoformat()}}
         )
         
-        # Activate subscription
         plan = transaction.get("plan", "monthly")
         await db.businesses.update_one(
             {"user_id": current_user["id"]},
             {"$set": {"subscription_status": "active", "subscription_plan": plan}}
         )
         
-        # Create notification
         notification = {
             "id": str(uuid.uuid4()),
             "user_id": current_user["id"],
@@ -717,7 +1377,8 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
             "needs_review": 0,
             "not_started": 0,
             "completion_percentage": 0,
-            "upcoming_reviews": []
+            "upcoming_reviews": [],
+            "employee_stats": None
         }
     
     checklist_items = await db.checklists.find({"business_id": business["id"]}, {"_id": 0}).to_list(1000)
@@ -727,20 +1388,38 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     needs_review = sum(1 for item in checklist_items if item["status"] == "needs_review")
     not_started = sum(1 for item in checklist_items if item["status"] == "not_started")
     
-    # Get upcoming reviews (within next 30 days)
     now = datetime.now(timezone.utc)
     thirty_days = now + timedelta(days=30)
     upcoming = []
     
     for item in checklist_items:
         if item.get("next_review_due"):
-            review_date = datetime.fromisoformat(item["next_review_due"].replace('Z', '+00:00'))
-            if now <= review_date <= thirty_days:
-                upcoming.append({
-                    "id": item["id"],
-                    "title": item["title"],
-                    "due_date": item["next_review_due"]
-                })
+            try:
+                review_date = datetime.fromisoformat(item["next_review_due"].replace('Z', '+00:00'))
+                if now <= review_date <= thirty_days:
+                    upcoming.append({
+                        "id": item["id"],
+                        "title": item["title"],
+                        "due_date": item["next_review_due"]
+                    })
+            except:
+                pass
+    
+    # Get employee compliance stats
+    employees = await db.employees.find({"business_id": business["id"], "is_active": True}, {"_id": 0}).to_list(1000)
+    total_employees = len(employees)
+    
+    employee_expired = 0
+    employee_expiring = 0
+    
+    for emp in employees:
+        requirements = await db.employee_requirements.find({"employee_id": emp["id"]}, {"_id": 0}).to_list(100)
+        for req in requirements:
+            status, _ = calculate_requirement_status(req.get("expiry_date"))
+            if status == "expired":
+                employee_expired += 1
+            elif status == "expiring_soon":
+                employee_expiring += 1
     
     return {
         "has_business": True,
@@ -750,7 +1429,12 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "needs_review": needs_review,
         "not_started": not_started,
         "completion_percentage": round((completed / total * 100) if total > 0 else 0),
-        "upcoming_reviews": sorted(upcoming, key=lambda x: x["due_date"])[:5]
+        "upcoming_reviews": sorted(upcoming, key=lambda x: x["due_date"])[:5],
+        "employee_stats": {
+            "total_employees": total_employees,
+            "expired_requirements": employee_expired,
+            "expiring_soon": employee_expiring
+        }
     }
 
 # ======================= ADMIN ROUTES =======================
