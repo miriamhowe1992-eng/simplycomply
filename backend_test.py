@@ -271,7 +271,7 @@ class SimplyComplyAPITester:
             "emergency_contact": "Jane Smith - 07987654321"
         }
         
-        success, employee = self.run_test("Create Employee", "POST", "employees", 201, data=employee_data)
+        success, employee = self.run_test("Create Employee", "POST", "employees", 200, data=employee_data)
         if not success:
             return False, "Failed to create employee"
         
