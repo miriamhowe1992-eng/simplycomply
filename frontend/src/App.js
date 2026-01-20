@@ -69,6 +69,16 @@ function App() {
               <NotificationsPage />
             </ProtectedRoute>
           } />
+          <Route path="/employees" element={
+            <ProtectedRoute>
+              <EmployeesPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/employees/:employeeId" element={
+            <ProtectedRoute>
+              <EmployeeDetailPage />
+            </ProtectedRoute>
+          } />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
