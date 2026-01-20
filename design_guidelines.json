@@ -1,0 +1,162 @@
+{
+  "identity": {
+    "persona": "E1",
+    "philosophy": "Fusion over Imitation. Emotion First. Content is King.",
+    "anti_patterns": [
+      "Purple/Teal gradients for everything",
+      "Inter font for headings",
+      "Centered layouts everywhere",
+      "Gradient overload"
+    ]
+  },
+  "theme": {
+    "mode": "light",
+    "emotional_archetype": "ARCHETYPE 4: SWISS & HIGH-CONTRAST (Authority, Clarity, Truth)",
+    "vibe": "Professional, Reassuring, Efficient, British (understated, functional)"
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Clash Display, sans-serif",
+        "weights": ["500", "600", "700"],
+        "usage": "Marketing Headings, Dashboard Section Titles",
+        "cdn_import": "https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap"
+      },
+      "body": {
+        "family": "Manrope, sans-serif",
+        "weights": ["400", "500", "600"],
+        "usage": "Body text, UI elements, Data tables",
+        "cdn_import": "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap"
+      },
+      "mono": {
+        "family": "JetBrains Mono, monospace",
+        "usage": "Code snippets, Reference numbers, IDs"
+      }
+    },
+    "rules": {
+      "headings": "Tight tracking (-0.02em). No Inter for headings.",
+      "overline": "Uppercase, tracking-widest (0.2em), text-xs, font-bold",
+      "body": "Relaxed line-height (1.6) for readability."
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "name": "Royal Navy",
+        "hex": "#0F172A",
+        "tailwind": "slate-900",
+        "usage": "Primary Buttons, Headings, Strong Borders"
+      },
+      "secondary": {
+        "name": "Trust Teal",
+        "hex": "#0D9488",
+        "tailwind": "teal-600",
+        "usage": "Accents, Success States, Highlights (Use sparingly)"
+      },
+      "background": {
+        "default": "#FFFFFF",
+        "subtle": "#F8FAFC",
+        "paper": "#FFFFFF"
+      },
+      "text": {
+        "primary": "#0F172A",
+        "secondary": "#475569",
+        "muted": "#94A3B8"
+      },
+      "status": {
+        "success": "#10B981",
+        "warning": "#F59E0B",
+        "error": "#E11D48",
+        "info": "#3B82F6"
+      }
+    },
+    "gradients": {
+      "subtle_glow": "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(13,148,136,0.05) 100%)",
+      "hero_mesh": "radial-gradient(circle at 50% 0%, rgba(13,148,136,0.1) 0%, rgba(255,255,255,0) 50%)"
+    }
+  },
+  "layout": {
+    "spacing_scale": "p-1, p-2, p-4, p-6, p-8, p-12, p-16, p-20, p-24, p-32",
+    "container_padding": "px-6 md:px-12 lg:px-24",
+    "grids": {
+      "marketing": {
+        "name": "The Tetris Grid",
+        "classes": "grid grid-cols-1 md:grid-cols-12 gap-8",
+        "rules": "Asymmetry is key. Mix col-span-4, col-span-8, and col-span-6. Never fill 100% perfectly."
+      },
+      "dashboard": {
+        "name": "The Bento Grid",
+        "classes": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+        "rules": "High density. Use h-full on children. No jagged bottoms."
+      }
+    }
+  },
+  "components": {
+    "buttons": {
+      "style": "Sharp or slightly rounded (rounded-md). No pill shapes for enterprise.",
+      "primary": "bg-slate-900 text-white hover:bg-slate-800 shadow-lg hover:shadow-xl transition-all",
+      "secondary": "bg-white border border-slate-200 text-slate-900 hover:bg-slate-50"
+    },
+    "cards": {
+      "style": "Flat with subtle border. Minimal shadow.",
+      "classes": "bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+    },
+    "inputs": {
+      "style": "Solid background, clear border.",
+      "classes": "bg-slate-50 border-slate-200 focus:border-teal-600 focus:ring-teal-600/20 rounded-md"
+    },
+    "navigation": {
+      "style": "Sticky, glassmorphism (subtle).",
+      "classes": "sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50"
+    }
+  },
+  "images": {
+    "marketing": [
+      {
+        "url": "https://images.unsplash.com/photo-1642844819197-5f5f21b89ff8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBkZW50YWwlMjBwcmFjdGljZSUyMGludGVyaW9yfGVufDB8fHx8MTc2ODk0ODYxN3ww&ixlib=rb-4.1.0&q=85",
+        "alt": "Modern Dental Practice",
+        "usage": "Sector Card: Healthcare/Dental"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1659353587228-5dbbebb5d98f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxjb25zdHJ1Y3Rpb24lMjBzaXRlJTIwbWFuYWdlciUyMHRhYmxldHxlbnwwfHx8fDE3Njg5NDg2MjB8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Construction Manager with Tablet",
+        "usage": "Sector Card: Construction/Trades"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1758691736975-9f7f643d178e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3MjQyMTd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBvZmZpY2UlMjBtZWV0aW5nJTIwZGl2ZXJzZXxlbnwwfHx8fDE3Njg5NDg2MjJ8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Diverse Office Team",
+        "usage": "Hero Section / About Us"
+      }
+    ],
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px (thin and elegant)"
+    }
+  },
+  "motion": {
+    "library": "framer-motion",
+    "transitions": "transition-all duration-300 ease-out",
+    "micro_interactions": "Hover lift (-2px), Scale up (1.02) on cards"
+  },
+  "accessibility": {
+    "contrast": "WCAG AA compliant. Text-slate-900 on white. Text-white on slate-900.",
+    "focus_states": "Visible ring-2 ring-teal-600 ring-offset-2",
+    "reduced_motion": "Respect prefers-reduced-motion media query"
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL FONTS: Add the CDN links for Clash Display and Manrope to public/index.html immediately.",
+    "2. CONFIGURE TAILWIND: Update tailwind.config.js to include the new font families and color palette.",
+    "3. UPDATE CSS VARIABLES: Modify src/index.css to reflect the 'Royal Navy' and 'Trust Teal' theme.",
+    "4. BUILD LAYOUTS: Use the 'Tetris Grid' for the landing page and 'Bento Grid' for the dashboard.",
+    "5. USE SHADCN: Customize the existing Shadcn components in src/components/ui to match the 'Sharp/Rounded-md' style defined above.",
+    "6. DATA-TESTID: Ensure every interactive element has a data-testid attribute."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Avoid 'AI Slop' aesthetics (generic centered layouts, purple gradients).",
+    "Use 2-3x more spacing than typical designs.",
+    "Never use 'Inter' for headings.",
+    "Do not use transparent backgrounds without blur/scrim.",
+    "Always use named exports for components and default exports for pages.",
+    "Use 'sonner' for toasts."
+  ]
+}
