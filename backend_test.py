@@ -407,6 +407,9 @@ class SimplyComplyAPITester:
         self.test_documents_operations()
         self.test_notifications()
         
+        # Test employee operations
+        self.test_employee_operations()
+        
         return self.print_results()
 
     def print_results(self):
