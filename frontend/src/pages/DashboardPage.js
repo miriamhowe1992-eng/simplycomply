@@ -221,6 +221,22 @@ export default function DashboardPage() {
                 </div>
               </Link>
               
+              <Link to="/employees" className="block">
+                <div className="p-4 rounded-lg border border-slate-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                      <Users className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">Employee Compliance</p>
+                      <p className="text-sm text-slate-500">
+                        {employee_stats?.total_employees || 0} employees
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+              
               <Link to="/settings" className="block">
                 <div className="p-4 rounded-lg border border-slate-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all cursor-pointer">
                   <div className="flex items-center gap-3">
