@@ -80,7 +80,8 @@ export default function DashboardPage() {
     needs_review, 
     not_started, 
     completion_percentage, 
-    upcoming_reviews 
+    upcoming_reviews,
+    employee_stats 
   } = stats;
 
   return (
@@ -106,6 +107,33 @@ export default function DashboardPage() {
             </Link>
           )}
         </div>
+
+        {/* Employee Compliance Alert */}
+        {employee_stats && (employee_stats.expired_requirements > 0 || employee_stats.expiring_soon > 0) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-medium text-amber-900">Employee Compliance Attention Needed</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  {employee_stats.expired_requirements > 0 && (
+                    <span className="font-medium">{employee_stats.expired_requirements} overdue</span>
+                  )}
+                  {employee_stats.expired_requirements > 0 && employee_stats.expiring_soon > 0 && " and "}
+                  {employee_stats.expiring_soon > 0 && (
+                    <span>{employee_stats.expiring_soon} expiring soon</span>
+                  )}
+                  {" "}employee requirement(s) need your attention.
+                </p>
+              </div>
+              <Link to="/employees">
+                <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-100">
+                  View Details
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
