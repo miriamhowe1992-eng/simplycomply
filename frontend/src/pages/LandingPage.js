@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { 
@@ -6,22 +7,24 @@ import {
   FileText, 
   Bell, 
   Users, 
-  Building2, 
   ArrowRight,
   ChevronRight,
-  Star
+  Star,
+  ChevronDown,
+  X
 } from "lucide-react";
-
-const sectors = [
-  { id: "dental", name: "Dental Practices", icon: "🦷" },
-  { id: "healthcare", name: "Healthcare", icon: "🏥" },
-  { id: "care_home", name: "Care Homes", icon: "🏡" },
-  { id: "construction", name: "Construction", icon: "🏗️" },
-  { id: "hospitality", name: "Hospitality", icon: "🍽️" },
-  { id: "retail", name: "Retail", icon: "🛍️" },
-  { id: "education", name: "Education", icon: "📚" },
-  { id: "office", name: "Offices", icon: "💼" }
-];
+import { 
+  getFeaturedIndustries, 
+  getAllIndustries, 
+  getIndustriesGroupedByCategory 
+} from "../data/industries";
+import { IndustryDetailModal } from "../components/IndustryDetailModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 const features = [
   {
@@ -47,6 +50,17 @@ const features = [
 ];
 
 export default function LandingPage() {
+  const [selectedIndustry, setSelectedIndustry] = useState(null);
+  const [showAllIndustries, setShowAllIndustries] = useState(false);
+  
+  const featuredIndustries = getFeaturedIndustries(8);
+  const allIndustries = getAllIndustries();
+  const groupedIndustries = getIndustriesGroupedByCategory();
+
+  const handleIndustryClick = (industry) => {
+    setSelectedIndustry(industry);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -105,9 +119,9 @@ export default function LandingPage() {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
-                <a href="#features">
+                <a href="#sectors">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    See How It Works
+                    Explore Industries
                   </Button>
                 </a>
               </div>
@@ -146,33 +160,104 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sectors Section */}
+      {/* Sectors Section - Compact with View All */}
       <section id="sectors" className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-12">
-            <p className="text-overline text-teal-600 mb-4">SECTORS WE SUPPORT</p>
+            <p className="text-overline text-teal-600 mb-4">INDUSTRIES WE SUPPORT</p>
             <h2 className="font-heading text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
               Compliance Packs for Every UK Industry
             </h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
               Select your business sector and get instant access to all required policies and procedures.
+              We've got you covered with industry-specific compliance packs.
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {sectors.map((sector) => (
-              <div 
-                key={sector.id}
-                className="bg-white rounded-lg border border-slate-200 p-6 text-center card-hover cursor-pointer"
-                data-testid={`sector-card-${sector.id}`}
+          {/* Industry Grid - Max 8 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {featuredIndustries.map((industry) => (
+              <button 
+                key={industry.id}
+                onClick={() => handleIndustryClick(industry)}
+                className="bg-white rounded-lg border border-slate-200 p-6 text-center card-hover cursor-pointer text-left transition-all hover:border-teal-300 hover:shadow-md group"
+                data-testid={`sector-card-${industry.id}`}
               >
-                <span className="text-4xl mb-3 block">{sector.icon}</span>
-                <h3 className="font-medium text-slate-900">{sector.name}</h3>
+                <span className="text-4xl mb-3 block">{industry.icon}</span>
+                <h3 className="font-medium text-slate-900 group-hover:text-teal-700 transition-colors">{industry.name}</h3>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{industry.shortDescription}</p>
+                <div className="mt-3 text-xs text-teal-600 font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Learn more <ChevronRight className="w-3 h-3" />
+                </div>
+              </button>
+            ))}
+          </div>
+          
+          {/* View All Button */}
+          {allIndustries.length > 8 && (
+            <div className="text-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAllIndustries(true)}
+                className="gap-2"
+                data-testid="view-all-industries-btn"
+              >
+                View all {allIndustries.length} industries
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* All Industries Modal */}
+      <Dialog open={showAllIndustries} onOpenChange={setShowAllIndustries}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-2xl">All Industries</DialogTitle>
+            <p className="text-slate-600">Click any industry to see what's included in the compliance pack</p>
+          </DialogHeader>
+          
+          <div className="space-y-8 mt-4">
+            {Object.entries(groupedIndustries).map(([category, industries]) => (
+              <div key={category}>
+                <h3 className="font-heading font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-teal-600 rounded-full" />
+                  {category}
+                  <span className="text-sm font-normal text-slate-500">({industries.length})</span>
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {industries.map((industry) => (
+                    <button
+                      key={industry.id}
+                      onClick={() => {
+                        setShowAllIndustries(false);
+                        setSelectedIndustry(industry);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all text-left"
+                      data-testid={`all-industries-${industry.id}`}
+                    >
+                      <span className="text-2xl">{industry.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-900 text-sm truncate">{industry.name}</p>
+                        <p className="text-xs text-slate-500">{industry.regulator}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </button>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </DialogContent>
+      </Dialog>
+
+      {/* Industry Detail Modal */}
+      <IndustryDetailModal 
+        industry={selectedIndustry}
+        open={!!selectedIndustry}
+        onClose={() => setSelectedIndustry(null)}
+      />
 
       {/* Features Section */}
       <section id="features" className="py-20">
@@ -232,11 +317,11 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-center gap-2 text-slate-600">
                   <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0" />
-                  Review reminders
+                  Employee compliance tracking
                 </li>
                 <li className="flex items-center gap-2 text-slate-600">
                   <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0" />
-                  Regulatory updates
+                  Review reminders
                 </li>
               </ul>
               <Link to="/signup">
