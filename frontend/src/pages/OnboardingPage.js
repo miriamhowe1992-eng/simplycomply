@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
 import { Button } from "../components/ui/button";
@@ -12,20 +12,31 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "../components/ui/select";
-import { Shield, Loader2, ArrowRight, Building2, MapPin, Users } from "lucide-react";
+import { Shield, Loader2, ArrowRight, Building2, MapPin, Search, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getAllIndustries, getIndustryById, getIndustriesGroupedByCategory } from "../data/industries";
+
+const UK_NATIONS = ["England", "Scotland", "Wales", "Northern Ireland"];
+
+const BUSINESS_SIZES = [
+  { id: "micro", name: "Micro (1-9 employees)" },
+  { id: "small", name: "Small (10-49 employees)" },
+  { id: "medium", name: "Medium (50-249 employees)" },
+  { id: "large", name: "Large (250+ employees)" }
+];
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [sectors, setSectors] = useState([]);
-  const [nations, setNations] = useState([]);
-  const [sizes, setSizes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [searchParams] = useSearchParams();
+  const preselectedIndustryId = searchParams.get("industry");
   
   const [formData, setFormData] = useState({
     name: "",
     industry: "",
-    sector: "",
+    sector: preselectedIndustryId || "",
     size: "",
     uk_nation: "",
     address: "",
@@ -34,6 +45,9 @@ export default function OnboardingPage() {
   
   const { refreshBusiness, business } = useAuth();
   const navigate = useNavigate();
+  
+  const allIndustries = getAllIndustries();
+  const groupedIndustries = getIndustriesGroupedByCategory();
 
   useEffect(() => {
     // If business already exists, redirect to dashboard
@@ -42,26 +56,21 @@ export default function OnboardingPage() {
       return;
     }
     
-    fetchReferenceData();
-  }, [business]);
-
-  const fetchReferenceData = async () => {
-    try {
-      const [sectorsRes, nationsRes, sizesRes] = await Promise.all([
-        api.get("/reference/sectors"),
-        api.get("/reference/nations"),
-        api.get("/reference/business-sizes")
-      ]);
-      setSectors(sectorsRes.data);
-      setNations(nationsRes.data);
-      setSizes(sizesRes.data);
-    } catch (error) {
-      toast.error("Failed to load reference data");
+    // Pre-select industry if provided
+    if (preselectedIndustryId) {
+      const industry = getIndustryById(preselectedIndustryId);
+      if (industry) {
+        setFormData(prev => ({
+          ...prev,
+          sector: preselectedIndustryId,
+          industry: industry.industry
+        }));
+      }
     }
-  };
+  }, [business, preselectedIndustryId]);
 
   const handleSectorSelect = (sectorId) => {
-    const sector = sectors.find(s => s.id === sectorId);
+    const sector = getIndustryById(sectorId);
     setFormData(prev => ({
       ...prev,
       sector: sectorId,
@@ -84,8 +93,19 @@ export default function OnboardingPage() {
     }
   };
 
+  // Filter industries based on search
+  const filteredIndustries = searchTerm 
+    ? allIndustries.filter(ind => 
+        ind.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ind.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ind.shortDescription?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : null;
+
   const canProceedStep1 = formData.sector && formData.size;
   const canProceedStep2 = formData.name && formData.uk_nation;
+  
+  const selectedIndustry = formData.sector ? getIndustryById(formData.sector) : null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -127,26 +147,99 @@ export default function OnboardingPage() {
             </div>
             
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label>What sector is your business in?</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {sectors.map((sector) => (
-                    <button
-                      key={sector.id}
-                      type="button"
-                      onClick={() => handleSectorSelect(sector.id)}
-                      data-testid={`onboarding-sector-${sector.id}`}
-                      className={`p-4 rounded-lg border text-left transition-all ${
-                        formData.sector === sector.id 
-                          ? 'border-teal-600 bg-teal-50' 
-                          : 'border-slate-200 hover:border-slate-300'
-                      }`}
+              {/* Selected Industry Display */}
+              {selectedIndustry && (
+                <div className="p-4 bg-teal-50 border border-teal-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{selectedIndustry.icon}</span>
+                      <div>
+                        <p className="font-medium text-teal-900">{selectedIndustry.name}</p>
+                        <p className="text-sm text-teal-700">Regulated by {selectedIndustry.regulator}</p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setFormData(prev => ({ ...prev, sector: "", industry: "" }))}
+                      className="text-teal-700"
                     >
-                      <span className="font-medium text-slate-900 text-sm">{sector.name}</span>
-                    </button>
-                  ))}
+                      Change
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
+              
+              {/* Sector Selection */}
+              {!selectedIndustry && (
+                <div className="space-y-4">
+                  <Label>What sector is your business in?</Label>
+                  
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      placeholder="Search industries..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-white"
+                      data-testid="industry-search-input"
+                    />
+                  </div>
+                  
+                  {/* Search Results */}
+                  {filteredIndustries ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-1">
+                      {filteredIndustries.map((industry) => (
+                        <button
+                          key={industry.id}
+                          type="button"
+                          onClick={() => handleSectorSelect(industry.id)}
+                          data-testid={`onboarding-sector-${industry.id}`}
+                          className="p-3 rounded-lg border border-slate-200 hover:border-teal-300 hover:bg-teal-50/50 transition-all text-left"
+                        >
+                          <span className="text-xl mr-2">{industry.icon}</span>
+                          <span className="font-medium text-slate-900 text-sm">{industry.name}</span>
+                        </button>
+                      ))}
+                      {filteredIndustries.length === 0 && (
+                        <p className="col-span-full text-center text-slate-500 py-4">
+                          No industries match your search
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    /* Grouped Industries */
+                    <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+                      {Object.entries(groupedIndustries).map(([category, industries]) => (
+                        <div key={category}>
+                          <h3 className="text-sm font-medium text-slate-500 mb-2">{category}</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {industries.map((industry) => (
+                              <button
+                                key={industry.id}
+                                type="button"
+                                onClick={() => handleSectorSelect(industry.id)}
+                                data-testid={`onboarding-sector-${industry.id}`}
+                                className={`p-3 rounded-lg border text-left transition-all ${
+                                  formData.sector === industry.id 
+                                    ? 'border-teal-600 bg-teal-50' 
+                                    : 'border-slate-200 hover:border-slate-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">{industry.icon}</span>
+                                  <span className="font-medium text-slate-900 text-sm truncate">{industry.name}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label>Business size</Label>
@@ -158,7 +251,7 @@ export default function OnboardingPage() {
                     <SelectValue placeholder="Select business size" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sizes.map((size) => (
+                    {BUSINESS_SIZES.map((size) => (
                       <SelectItem key={size.id} value={size.id}>
                         {size.name}
                       </SelectItem>
@@ -166,6 +259,28 @@ export default function OnboardingPage() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* What's included preview */}
+              {selectedIndustry && (
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                  <h4 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                    What's included in your pack
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedIndustry.complianceAreas.filter(a => a.included).slice(0, 6).map((area, i) => (
+                      <span key={i} className="text-xs bg-white px-2 py-1 rounded border border-slate-200 text-slate-600">
+                        {area.name}
+                      </span>
+                    ))}
+                    {selectedIndustry.complianceAreas.filter(a => a.included).length > 6 && (
+                      <span className="text-xs text-slate-500">
+                        +{selectedIndustry.complianceAreas.filter(a => a.included).length - 6} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               
               <Button 
                 onClick={() => setStep(2)} 
@@ -218,7 +333,7 @@ export default function OnboardingPage() {
                     <SelectValue placeholder="Select UK nation" />
                   </SelectTrigger>
                   <SelectContent>
-                    {nations.map((nation) => (
+                    {UK_NATIONS.map((nation) => (
                       <SelectItem key={nation} value={nation}>
                         {nation}
                       </SelectItem>
