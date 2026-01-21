@@ -1507,6 +1507,528 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         }
     }
 
+# ======================= COMPLIANCE ITEMS & SCORE SYSTEM =======================
+
+# Industry-specific compliance requirements structure
+# This maps to the frontend industries.js and serves as the single source of truth for backend
+INDUSTRY_COMPLIANCE_MODEL = {
+    # Personal & Body Art Services
+    "tattoo_studio": {
+        "name": "Tattoo Artist / Studio",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "infection_control_policy", "title": "Infection Prevention & Control Policy", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "client_consent_form", "title": "Client Consultation & Consent Form", "type": "template", "category": "Client Care", "required": True},
+            {"key": "aftercare_sheet", "title": "Aftercare Advice Sheet", "type": "template", "category": "Client Care", "required": True},
+            {"key": "medical_questionnaire", "title": "Medical History Questionnaire", "type": "template", "category": "Client Care", "required": True},
+            {"key": "coshh_assessment", "title": "COSHH Assessment (Inks, Cleaning Agents)", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "sharps_procedure", "title": "Sharps & Clinical Waste Disposal Procedure", "type": "procedure", "category": "Infection Control", "required": True},
+            {"key": "autoclave_log", "title": "Autoclave Maintenance & Testing Log", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "sterilisation_records", "title": "Sterilisation Records", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "cleaning_checklist", "title": "Equipment Cleaning Checklist", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "gdpr_privacy_notice", "title": "Client Privacy Notice (GDPR)", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "staff_training_records", "title": "Staff Training Records", "type": "audit", "category": "Staff Management", "required": True},
+            {"key": "accident_report_form", "title": "Accident & Incident Report Form", "type": "template", "category": "Health & Safety", "required": True},
+            {"key": "age_verification_policy", "title": "Age Verification Policy", "type": "policy", "category": "Client Care", "required": True},
+            {"key": "allergy_screening_form", "title": "Allergy & Sensitivity Screening Form", "type": "template", "category": "Client Care", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "general_hs_risk_assessment", "title": "General Health & Safety Risk Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "infection_control_risk_assessment", "title": "Infection Control Risk Assessment", "type": "risk_assessment", "category": "Infection Control", "required": True},
+            {"key": "lone_working_risk_assessment", "title": "Lone Working Risk Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": False},
+            {"key": "annual_policy_review", "title": "Annual Policy Review", "type": "audit", "category": "Compliance", "required": True},
+            {"key": "hs_law_poster", "title": "Health & Safety Law Poster", "type": "poster", "category": "Mandatory Posters", "required": True},
+            {"key": "insurance_certificate", "title": "Public Liability Insurance Certificate", "type": "operational", "category": "Insurance", "required": True},
+            {"key": "local_authority_registration", "title": "Local Authority Registration", "type": "operational", "category": "Licensing", "required": True},
+        ]
+    },
+    "piercing_studio": {
+        "name": "Piercing Studio",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "infection_control_policy", "title": "Infection Prevention & Control Policy", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "client_consent_form", "title": "Client Consultation & Consent Form", "type": "template", "category": "Client Care", "required": True},
+            {"key": "parental_consent_form", "title": "Parental Consent Form (for minors)", "type": "template", "category": "Client Care", "required": True},
+            {"key": "aftercare_instructions", "title": "Aftercare Instructions", "type": "template", "category": "Client Care", "required": True},
+            {"key": "medical_questionnaire", "title": "Medical History Questionnaire", "type": "template", "category": "Client Care", "required": True},
+            {"key": "coshh_assessment", "title": "COSHH Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "sharps_procedure", "title": "Sharps & Clinical Waste Procedure", "type": "procedure", "category": "Infection Control", "required": True},
+            {"key": "sterilisation_records", "title": "Sterilisation Records & Autoclave Log", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "cleaning_checklist", "title": "Equipment Cleaning Checklist", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "gdpr_privacy_notice", "title": "Client Privacy Notice (GDPR)", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "staff_training_records", "title": "Staff Training Records", "type": "audit", "category": "Staff Management", "required": True},
+            {"key": "accident_report_form", "title": "Accident & Incident Report Form", "type": "template", "category": "Health & Safety", "required": True},
+            {"key": "age_verification_policy", "title": "Age Verification Policy", "type": "policy", "category": "Client Care", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "general_hs_risk_assessment", "title": "General Health & Safety Risk Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+        ]
+    },
+    "microblading_pmu": {
+        "name": "Microblading / PMU",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "infection_control_policy", "title": "Infection Prevention & Control Policy", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "client_consent_form", "title": "Client Consultation & Consent Form", "type": "template", "category": "Client Care", "required": True},
+            {"key": "patch_test_record", "title": "Patch Test Record & Policy", "type": "template", "category": "Client Care", "required": True},
+            {"key": "contraindications_checklist", "title": "Contraindications Checklist", "type": "template", "category": "Client Care", "required": True},
+            {"key": "aftercare_instructions", "title": "Aftercare Instructions", "type": "template", "category": "Client Care", "required": True},
+            {"key": "medical_questionnaire", "title": "Medical History Questionnaire", "type": "template", "category": "Client Care", "required": True},
+            {"key": "coshh_assessment", "title": "COSHH Assessment (Pigments, Numbing)", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "sharps_procedure", "title": "Sharps & Clinical Waste Procedure", "type": "procedure", "category": "Infection Control", "required": True},
+            {"key": "sterilisation_records", "title": "Sterilisation Records", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "cleaning_checklist", "title": "Equipment Cleaning Checklist", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "gdpr_privacy_notice", "title": "Client Privacy Notice (GDPR)", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "photo_consent", "title": "Before & After Photo Consent", "type": "template", "category": "GDPR & Data Protection", "required": True},
+            {"key": "colour_expectations_record", "title": "Colour Selection & Expectations Record", "type": "template", "category": "Client Care", "required": True},
+            {"key": "touchup_policy", "title": "Touch-Up & Aftercare Policy", "type": "policy", "category": "Client Care", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "general_hs_risk_assessment", "title": "General Health & Safety Risk Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+        ]
+    },
+    "aesthetics_clinic": {
+        "name": "Aesthetics Clinic",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "infection_control_policy", "title": "Infection Prevention & Control Policy", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "client_assessment_form", "title": "Client Consultation & Assessment Form", "type": "template", "category": "Client Care", "required": True},
+            {"key": "treatment_consent_form", "title": "Treatment Consent Form", "type": "template", "category": "Client Care", "required": True},
+            {"key": "medical_questionnaire", "title": "Medical History Questionnaire", "type": "template", "category": "Client Care", "required": True},
+            {"key": "contraindications_checklist", "title": "Contraindications & Screening Checklist", "type": "template", "category": "Client Care", "required": True},
+            {"key": "aftercare_instructions", "title": "Aftercare Instructions (per treatment)", "type": "template", "category": "Client Care", "required": True},
+            {"key": "coshh_assessment", "title": "COSHH Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "sharps_procedure", "title": "Sharps & Clinical Waste Procedure", "type": "procedure", "category": "Infection Control", "required": True},
+            {"key": "equipment_maintenance_log", "title": "Equipment Maintenance Log", "type": "audit", "category": "Equipment", "required": True},
+            {"key": "product_batch_records", "title": "Product Batch & Traceability Records", "type": "audit", "category": "Equipment", "required": True},
+            {"key": "gdpr_privacy_notice", "title": "Client Privacy Notice (GDPR)", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints & Complications Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "emergency_protocol", "title": "Emergency & Adverse Reaction Protocol", "type": "procedure", "category": "Health & Safety", "required": True},
+            {"key": "photo_consent", "title": "Before & After Photo Consent", "type": "template", "category": "GDPR & Data Protection", "required": True},
+            {"key": "cooling_off_policy", "title": "Cooling-Off Period Policy", "type": "policy", "category": "Client Care", "required": True},
+            {"key": "staff_qualifications_records", "title": "Staff Qualifications & Insurance Records", "type": "audit", "category": "Staff Management", "required": True},
+            {"key": "prescriber_documentation", "title": "Prescriber Arrangement Documentation", "type": "operational", "category": "Regulatory", "required": False},
+            {"key": "clinical_procedures_risk_assessment", "title": "Clinical Procedures Risk Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+        ]
+    },
+    "barber_hairdresser": {
+        "name": "Barber / Hairdresser",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "hygiene_policy", "title": "Hygiene & Infection Control Policy", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "client_consultation_card", "title": "Client Consultation Card", "type": "template", "category": "Client Care", "required": True},
+            {"key": "allergy_test_record", "title": "Allergy Alert Test Record (colours)", "type": "template", "category": "Client Care", "required": True},
+            {"key": "coshh_assessment", "title": "COSHH Assessment (Hair Products)", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "sharps_procedure", "title": "Sharps Procedure (razors)", "type": "procedure", "category": "Infection Control", "required": True},
+            {"key": "cleaning_checklist", "title": "Equipment Cleaning & Sterilisation Checklist", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "gdpr_privacy_notice", "title": "Client Privacy Notice (GDPR)", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "staff_handbook", "title": "Staff Handbook", "type": "policy", "category": "Staff Management", "required": True},
+            {"key": "accident_report_form", "title": "Accident & Incident Report Form", "type": "template", "category": "Health & Safety", "required": True},
+            {"key": "first_aid_procedures", "title": "First Aid Procedures", "type": "procedure", "category": "Health & Safety", "required": True},
+            {"key": "fire_safety_procedures", "title": "Fire Safety Procedures", "type": "procedure", "category": "Fire Safety", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "general_hs_risk_assessment", "title": "General Health & Safety Risk Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+        ]
+    },
+    # Healthcare
+    "dental": {
+        "name": "Dental Practice",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "infection_control_policy", "title": "Infection Control Policy (Decontamination)", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "safeguarding_policy", "title": "Safeguarding Adults & Children Policy", "type": "policy", "category": "Safeguarding", "required": True},
+            {"key": "gdpr_privacy_notice", "title": "GDPR Patient Privacy Notice", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Handling Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "sharps_protocol", "title": "Sharps & Needlestick Protocol", "type": "procedure", "category": "Infection Control", "required": True},
+            {"key": "radiation_protection_policy", "title": "Radiation Protection Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "medical_emergency_procedures", "title": "Medical Emergency Procedures", "type": "procedure", "category": "Health & Safety", "required": True},
+            {"key": "staff_induction_checklist", "title": "Staff Induction Checklist", "type": "template", "category": "Staff Management", "required": True},
+            {"key": "cqc_statement_of_purpose", "title": "CQC Statement of Purpose", "type": "operational", "category": "Regulatory", "required": True},
+            {"key": "clinical_risk_assessment", "title": "Clinical Risk Assessment", "type": "risk_assessment", "category": "Risk Assessments", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "coshh_assessment", "title": "COSHH Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+            {"key": "staff_handbook", "title": "Staff Handbook", "type": "policy", "category": "Staff Management", "required": True},
+            {"key": "hs_law_poster", "title": "Health & Safety Law Poster", "type": "poster", "category": "Mandatory Posters", "required": True},
+            {"key": "cqc_rating_display", "title": "CQC Registration Certificate Display", "type": "poster", "category": "Mandatory Posters", "required": True},
+            {"key": "sterilisation_log", "title": "Sterilisation & Autoclave Log", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "waste_disposal_log", "title": "Clinical Waste Disposal Log", "type": "audit", "category": "Infection Control", "required": True},
+            {"key": "annual_policy_review", "title": "Annual Policy Review", "type": "audit", "category": "Compliance", "required": True},
+        ]
+    },
+    "healthcare": {
+        "name": "Healthcare Provider",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "safeguarding_policy", "title": "Safeguarding Policy (Adults & Children)", "type": "policy", "category": "Safeguarding", "required": True},
+            {"key": "infection_control_policy", "title": "Infection Prevention & Control Policy", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "medicines_management_policy", "title": "Medicines Management Policy", "type": "policy", "category": "Medication", "required": True},
+            {"key": "information_governance_policy", "title": "Information Governance Policy", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "clinical_risk_assessment", "title": "Clinical Risk Assessment", "type": "risk_assessment", "category": "Risk Assessments", "required": True},
+            {"key": "consent_policy", "title": "Consent Policy", "type": "policy", "category": "Client Care", "required": True},
+            {"key": "duty_of_candour_policy", "title": "Duty of Candour Policy", "type": "policy", "category": "Regulatory", "required": True},
+            {"key": "staff_training_matrix", "title": "Staff Training Matrix", "type": "audit", "category": "Staff Management", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "cqc_statement_of_purpose", "title": "CQC Statement of Purpose", "type": "operational", "category": "Regulatory", "required": True},
+        ]
+    },
+    "care_home": {
+        "name": "Care Home",
+        "items": [
+            {"key": "safeguarding_adults_policy", "title": "Safeguarding Adults Policy", "type": "policy", "category": "Safeguarding", "required": True},
+            {"key": "mental_capacity_policy", "title": "Mental Capacity & Best Interests Policy", "type": "policy", "category": "Regulatory", "required": True},
+            {"key": "medication_administration_policy", "title": "Medication Administration Policy", "type": "policy", "category": "Medication", "required": True},
+            {"key": "falls_prevention_policy", "title": "Falls Prevention Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "moving_handling_policy", "title": "Moving & Handling Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "infection_control_policy", "title": "Infection Control Policy", "type": "policy", "category": "Infection Control", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "care_plan_templates", "title": "Care Plan Templates", "type": "template", "category": "Client Care", "required": True},
+            {"key": "staff_supervision_policy", "title": "Staff Supervision Policy", "type": "policy", "category": "Staff Management", "required": True},
+            {"key": "resident_privacy_notice", "title": "Resident Privacy Notice", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "manual_handling_risk_assessment", "title": "Manual Handling Risk Assessment", "type": "risk_assessment", "category": "Health & Safety", "required": True},
+        ]
+    },
+    # Default items for industries not specifically defined
+    "_default": {
+        "name": "Default",
+        "items": [
+            {"key": "health_safety_policy", "title": "Health & Safety Policy", "type": "policy", "category": "Health & Safety", "required": True},
+            {"key": "gdpr_privacy_notice", "title": "Data Protection Policy", "type": "policy", "category": "GDPR & Data Protection", "required": True},
+            {"key": "equality_diversity_policy", "title": "Equality & Diversity Policy", "type": "policy", "category": "Equality & Diversity", "required": True},
+            {"key": "complaints_procedure", "title": "Complaints Procedure", "type": "procedure", "category": "Complaints", "required": True},
+            {"key": "workplace_risk_assessment", "title": "Workplace Risk Assessment", "type": "risk_assessment", "category": "Risk Assessments", "required": True},
+            {"key": "fire_risk_assessment", "title": "Fire Risk Assessment", "type": "risk_assessment", "category": "Fire Safety", "required": True},
+            {"key": "staff_handbook", "title": "Employee Handbook", "type": "policy", "category": "Staff Management", "required": True},
+            {"key": "hs_law_poster", "title": "Health & Safety Law Poster", "type": "poster", "category": "Mandatory Posters", "required": True},
+            {"key": "accident_report_form", "title": "Accident Report Form", "type": "template", "category": "Health & Safety", "required": True},
+            {"key": "annual_policy_review", "title": "Annual Policy Review", "type": "audit", "category": "Compliance", "required": True},
+        ]
+    }
+}
+
+def get_industry_compliance_items(industry_id: str) -> List[dict]:
+    """Get compliance items for an industry, falling back to default"""
+    industry_data = INDUSTRY_COMPLIANCE_MODEL.get(industry_id, INDUSTRY_COMPLIANCE_MODEL["_default"])
+    return industry_data["items"]
+
+async def generate_business_compliance_items(business_id: str, industry_id: str):
+    """Generate compliance items for a business based on industry"""
+    items = get_industry_compliance_items(industry_id)
+    now = datetime.now(timezone.utc)
+    
+    for item in items:
+        compliance_item = {
+            "id": str(uuid.uuid4()),
+            "business_id": business_id,
+            "industry_id": industry_id,
+            "item_type": item["type"],
+            "item_key": item["key"],
+            "title": item["title"],
+            "description": item.get("description", ""),
+            "category": item["category"],
+            "is_required": item["required"],
+            "status": "missing",
+            "is_acknowledged": False,
+            "acknowledged_at": None,
+            "is_customised": False,
+            "custom_content": None,
+            "file_url": None,
+            "file_name": None,
+            "version": "1.0",
+            "last_reviewed": None,
+            "next_review_due": (now + timedelta(days=365)).isoformat(),
+            "notes": None,
+            "created_at": now.isoformat(),
+            "updated_at": None,
+            "contributes_to_score": item["required"]
+        }
+        await db.compliance_items.insert_one(compliance_item)
+
+async def calculate_compliance_score(business_id: str) -> dict:
+    """Calculate compliance readiness score for a business"""
+    business = await db.businesses.find_one({"id": business_id}, {"_id": 0})
+    if not business:
+        return None
+    
+    industry_id = business.get("sector", "_default")
+    
+    items = await db.compliance_items.find({"business_id": business_id}, {"_id": 0}).to_list(500)
+    
+    now = datetime.now(timezone.utc)
+    
+    # Count required items only for score
+    required_items = [i for i in items if i.get("is_required", True)]
+    required_total = len(required_items)
+    
+    completed_statuses = ["uploaded", "acknowledged", "approved"]
+    completed_items = [i for i in required_items if i["status"] in completed_statuses]
+    completed_total = len(completed_items)
+    
+    missing_count = sum(1 for i in required_items if i["status"] == "missing")
+    overdue_count = 0
+    needs_review_count = 0
+    
+    # Check for overdue reviews
+    for item in required_items:
+        if item.get("next_review_due"):
+            try:
+                review_date = datetime.fromisoformat(item["next_review_due"].replace('Z', '+00:00'))
+                if review_date < now:
+                    overdue_count += 1
+                elif (review_date - now).days <= 30:
+                    needs_review_count += 1
+            except:
+                pass
+        if item["status"] == "needs_review":
+            needs_review_count += 1
+    
+    # Calculate percentage
+    score_percent = round((completed_total / required_total * 100) if required_total > 0 else 0)
+    
+    # Determine status label
+    if overdue_count > 0:
+        status_label = "overdue"
+    elif missing_count > required_total * 0.3 or score_percent < 50:
+        status_label = "needs_attention"
+    else:
+        status_label = "on_track"
+    
+    # Calculate breakdown by category
+    categories = {}
+    for item in items:
+        cat = item["category"]
+        if cat not in categories:
+            categories[cat] = {"total": 0, "completed": 0, "required_total": 0, "required_completed": 0}
+        categories[cat]["total"] += 1
+        if item["status"] in completed_statuses:
+            categories[cat]["completed"] += 1
+        if item.get("is_required"):
+            categories[cat]["required_total"] += 1
+            if item["status"] in completed_statuses:
+                categories[cat]["required_completed"] += 1
+    
+    # Find next review due
+    next_review_due = None
+    for item in items:
+        if item.get("next_review_due") and item["status"] in completed_statuses:
+            if not next_review_due or item["next_review_due"] < next_review_due:
+                next_review_due = item["next_review_due"]
+    
+    score_data = {
+        "business_id": business_id,
+        "industry_id": industry_id,
+        "score_percent": score_percent,
+        "required_total": required_total,
+        "completed_total": completed_total,
+        "missing_count": missing_count,
+        "overdue_count": overdue_count,
+        "needs_review_count": needs_review_count,
+        "status_label": status_label,
+        "last_calculated_at": now.isoformat(),
+        "next_review_due_at": next_review_due,
+        "breakdown": categories
+    }
+    
+    # Cache the score
+    await db.compliance_scores.update_one(
+        {"business_id": business_id},
+        {"$set": score_data},
+        upsert=True
+    )
+    
+    return score_data
+
+# ======================= COMPLIANCE SCORE API ROUTES =======================
+
+@api_router.get("/compliance/score", response_model=ComplianceScoreResponse)
+async def get_compliance_score(current_user: dict = Depends(get_current_user)):
+    """Get compliance readiness score for current business"""
+    business = await db.businesses.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found. Please complete onboarding.")
+    
+    # Check if compliance items exist, if not generate them
+    items_count = await db.compliance_items.count_documents({"business_id": business["id"]})
+    if items_count == 0:
+        await generate_business_compliance_items(business["id"], business.get("sector", "_default"))
+    
+    score = await calculate_compliance_score(business["id"])
+    return ComplianceScoreResponse(**score)
+
+@api_router.get("/compliance/items", response_model=List[ComplianceItemResponse])
+async def get_compliance_items(
+    category: Optional[str] = None,
+    item_type: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all compliance items for the current business"""
+    business = await db.businesses.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found. Please complete onboarding.")
+    
+    # Check if compliance items exist, if not generate them
+    items_count = await db.compliance_items.count_documents({"business_id": business["id"]})
+    if items_count == 0:
+        await generate_business_compliance_items(business["id"], business.get("sector", "_default"))
+    
+    # Build query
+    query = {"business_id": business["id"]}
+    if category:
+        query["category"] = category
+    if item_type:
+        query["item_type"] = item_type
+    if status:
+        query["status"] = status
+    
+    items = await db.compliance_items.find(query, {"_id": 0}).to_list(500)
+    return [ComplianceItemResponse(**item) for item in items]
+
+@api_router.get("/compliance/items/{item_id}", response_model=ComplianceItemResponse)
+async def get_compliance_item(item_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single compliance item"""
+    business = await db.businesses.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    item = await db.compliance_items.find_one({"id": item_id, "business_id": business["id"]}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Compliance item not found")
+    
+    return ComplianceItemResponse(**item)
+
+@api_router.put("/compliance/items/{item_id}", response_model=ComplianceItemResponse)
+async def update_compliance_item(
+    item_id: str,
+    update_data: ComplianceItemUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a compliance item (acknowledge, upload, customise)"""
+    business = await db.businesses.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    item = await db.compliance_items.find_one({"id": item_id, "business_id": business["id"]})
+    if not item:
+        raise HTTPException(status_code=404, detail="Compliance item not found")
+    
+    now = datetime.now(timezone.utc)
+    updates = {"updated_at": now.isoformat()}
+    
+    # Handle acknowledgement
+    if update_data.is_acknowledged is not None:
+        updates["is_acknowledged"] = update_data.is_acknowledged
+        if update_data.is_acknowledged:
+            updates["acknowledged_at"] = now.isoformat()
+            if item["status"] == "missing":
+                updates["status"] = "acknowledged"
+                updates["last_reviewed"] = now.isoformat()
+                updates["next_review_due"] = (now + timedelta(days=365)).isoformat()
+    
+    # Handle customisation
+    if update_data.is_customised is not None:
+        updates["is_customised"] = update_data.is_customised
+    if update_data.custom_content is not None:
+        updates["custom_content"] = update_data.custom_content
+        updates["is_customised"] = True
+        if item["status"] in ["missing", "draft"]:
+            updates["status"] = "draft"
+    
+    # Handle file upload
+    if update_data.file_url is not None:
+        updates["file_url"] = update_data.file_url
+        updates["file_name"] = update_data.file_name
+        updates["status"] = "uploaded"
+        updates["last_reviewed"] = now.isoformat()
+        updates["next_review_due"] = (now + timedelta(days=365)).isoformat()
+    
+    # Handle direct status update
+    if update_data.status is not None:
+        updates["status"] = update_data.status
+        if update_data.status in ["uploaded", "acknowledged", "approved"]:
+            updates["last_reviewed"] = now.isoformat()
+            updates["next_review_due"] = (now + timedelta(days=365)).isoformat()
+    
+    if update_data.notes is not None:
+        updates["notes"] = update_data.notes
+    
+    await db.compliance_items.update_one({"id": item_id}, {"$set": updates})
+    
+    # Recalculate score after update
+    await calculate_compliance_score(business["id"])
+    
+    # Create notification for completion
+    if updates.get("status") in ["uploaded", "acknowledged", "approved"]:
+        notification = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user["id"],
+            "title": "Compliance Item Updated",
+            "message": f"'{item['title']}' has been marked as {updates['status']}.",
+            "type": "success",
+            "is_read": False,
+            "created_at": now.isoformat()
+        }
+        await db.notifications.insert_one(notification)
+    
+    updated = await db.compliance_items.find_one({"id": item_id}, {"_id": 0})
+    return ComplianceItemResponse(**updated)
+
+@api_router.post("/compliance/items/{item_id}/acknowledge")
+async def acknowledge_compliance_item(item_id: str, current_user: dict = Depends(get_current_user)):
+    """Quick acknowledge endpoint for a compliance item"""
+    business = await db.businesses.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    item = await db.compliance_items.find_one({"id": item_id, "business_id": business["id"]})
+    if not item:
+        raise HTTPException(status_code=404, detail="Compliance item not found")
+    
+    now = datetime.now(timezone.utc)
+    await db.compliance_items.update_one(
+        {"id": item_id},
+        {"$set": {
+            "is_acknowledged": True,
+            "acknowledged_at": now.isoformat(),
+            "status": "acknowledged",
+            "last_reviewed": now.isoformat(),
+            "next_review_due": (now + timedelta(days=365)).isoformat(),
+            "updated_at": now.isoformat()
+        }}
+    )
+    
+    # Recalculate score
+    await calculate_compliance_score(business["id"])
+    
+    return {"message": "Item acknowledged", "item_id": item_id}
+
+@api_router.get("/compliance/categories")
+async def get_compliance_categories(current_user: dict = Depends(get_current_user)):
+    """Get list of compliance categories for the business"""
+    business = await db.businesses.find_one({"user_id": current_user["id"]}, {"_id": 0})
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    items = await db.compliance_items.find({"business_id": business["id"]}, {"category": 1, "_id": 0}).to_list(500)
+    categories = list(set(item["category"] for item in items))
+    return sorted(categories)
+
+@api_router.get("/compliance/types")
+async def get_compliance_types(current_user: dict = Depends(get_current_user)):
+    """Get list of compliance item types"""
+    return [
+        {"id": "policy", "name": "Policy"},
+        {"id": "procedure", "name": "Procedure"},
+        {"id": "risk_assessment", "name": "Risk Assessment"},
+        {"id": "audit", "name": "Audit / Check"},
+        {"id": "poster", "name": "Poster / Notice"},
+        {"id": "template", "name": "Template / Form"},
+        {"id": "operational", "name": "Operational Requirement"}
+    ]
+
 # ======================= ADMIN ROUTES =======================
 
 async def require_admin(current_user: dict = Depends(get_current_user)):
