@@ -14,13 +14,18 @@ import {
   Users,
   Scale,
   Info,
-  ExternalLink
+  ExternalLink,
+  ClipboardCheck,
+  RefreshCw,
+  Wrench,
+  AlertCircle
 } from "lucide-react";
 import { 
-  COMPLIANCE_AREAS, 
-  REGULATORY_BODIES,
+  PLATFORM_DISCLAIMERS,
   getComplianceAreasForIndustry,
-  getRegulatoryBodiesForIndustry 
+  getRegulatoryBodiesForIndustry,
+  getRiskAssessmentsForIndustry,
+  getAuditsChecksForIndustry
 } from "../data/industries";
 
 export function IndustryDetailModal({ industry, open, onClose }) {
@@ -35,10 +40,12 @@ export function IndustryDetailModal({ industry, open, onClose }) {
 
   const complianceAreas = getComplianceAreasForIndustry(industry.id);
   const regulatoryBodies = getRegulatoryBodiesForIndustry(industry.id);
+  const riskAssessments = getRiskAssessmentsForIndustry(industry.id);
+  const auditsChecks = getAuditsChecksForIndustry(industry.id);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <span className="text-4xl">{industry.icon}</span>
@@ -77,7 +84,7 @@ export function IndustryDetailModal({ industry, open, onClose }) {
           <section>
             <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
               <Scale className="w-5 h-5 text-teal-600" />
-              Regulatory Bodies We Help You Prepare For
+              Regulatory Bodies
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {regulatoryBodies.map((body, index) => (
@@ -124,6 +131,42 @@ export function IndustryDetailModal({ industry, open, onClose }) {
             </div>
           </section>
 
+          {/* Risk Assessments */}
+          {riskAssessments.length > 0 && (
+            <section>
+              <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
+                <ClipboardCheck className="w-5 h-5 text-teal-600" />
+                Required Risk Assessments
+              </h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {riskAssessments.map((ra, index) => (
+                  <li key={index} className="flex items-start gap-2 text-slate-600 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    {ra.name}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Audits & Ongoing Checks */}
+          {auditsChecks.length > 0 && (
+            <section>
+              <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
+                <RefreshCw className="w-5 h-5 text-teal-600" />
+                Audits & Ongoing Checks
+              </h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {auditsChecks.map((ac, index) => (
+                  <li key={index} className="flex items-start gap-2 text-slate-600 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    {ac.name}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {/* Example Documents */}
           <section>
             <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
@@ -140,6 +183,36 @@ export function IndustryDetailModal({ industry, open, onClose }) {
             </ul>
           </section>
 
+          {/* Operational Requirements */}
+          {industry.operationalRequirements && industry.operationalRequirements.length > 0 && (
+            <section>
+              <h3 className="font-heading font-semibold text-slate-900 flex items-center gap-2 mb-3">
+                <Wrench className="w-5 h-5 text-teal-600" />
+                Practical Requirements
+              </h3>
+              <ul className="grid grid-cols-1 gap-2">
+                {industry.operationalRequirements.map((req, index) => (
+                  <li key={index} className="flex items-start gap-2 text-slate-600 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+                    {req}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Regional Variations Note */}
+          {industry.hasRegionalVariations && (
+            <section className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 text-slate-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-slate-600">
+                  {PLATFORM_DISCLAIMERS.regionalNote}
+                </p>
+              </div>
+            </section>
+          )}
+
           {/* Industry Disclaimer */}
           <section className="bg-blue-50 border border-blue-100 rounded-lg p-4">
             <div className="flex gap-3">
@@ -151,6 +224,13 @@ export function IndustryDetailModal({ industry, open, onClose }) {
                 </p>
               </div>
             </div>
+          </section>
+
+          {/* Platform Disclaimer */}
+          <section className="border-t border-slate-200 pt-4">
+            <p className="text-xs text-slate-500 leading-relaxed text-center">
+              {PLATFORM_DISCLAIMERS.industryModal}
+            </p>
           </section>
 
           {/* CTA */}
