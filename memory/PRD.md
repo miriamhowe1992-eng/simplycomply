@@ -24,14 +24,9 @@ Create a UK-based SaaS web platform called SimplyComply that allows UK businesse
 ### Phase 1 - MVP (Completed)
 - [x] User signup/login with JWT authentication
 - [x] Business profile setup with industry/sector selection
-- [x] **26 UK industries** with proper regulators (CQC, RCVS, HSE, Ofsted, SIA, etc.)
+- [x] **30 UK industries** with proper regulators
 - [x] **Single source of truth** for industries data (`/app/frontend/src/data/industries.js`)
-- [x] Comprehensive industry detail modals with:
-  - Full descriptions and "Who is this for?" lists
-  - Regulatory bodies (with full names, descriptions, and external links)
-  - Compliance areas covered (Health & Safety, GDPR, Safeguarding, etc.)
-  - Example documents and templates
-  - Industry-specific disclaimers
+- [x] Comprehensive industry detail modals with all sections (see Phase 3 below)
 - [x] "View all industries" modal grouped by category
 - [x] Industry pre-selection via URL params (/signup?industry=dental)
 - [x] Auto-generated compliance checklist per sector
@@ -43,20 +38,54 @@ Create a UK-based SaaS web platform called SimplyComply that allows UK businesse
 
 ### Phase 2 - Employee Compliance (Completed)
 - [x] Employee management (add, edit, delete)
-- [x] Auto-generated employee requirements based on sector:
-  - DBS checks (Enhanced/Basic per role)
-  - Right to Work verification
-  - Professional registrations (GDC, NMC, RCVS, SIA, etc.)
-  - Certifications (First Aid, Food Hygiene, CSCS, etc.)
-  - Training (Safeguarding, Fire Safety, Manual Handling, etc.)
-  - CPD tracking
+- [x] Auto-generated employee requirements based on sector
 - [x] Compliance status tracking (Valid, Expiring Soon, Expired, Pending)
 - [x] Overdue alerts and expiring soon warnings
 - [x] Employee detail page with requirement management
-- [x] Issue date, expiry date, and reference number tracking
-- [x] Auto-status calculation based on expiry dates
 
-## Supported Industries (26 total)
+### Phase 3 - Enhanced Industries System (Completed - Jan 2025)
+- [x] Added new "Personal & Body Art Services" category with 5 industries:
+  - Tattoo Artist / Studio (high-detail reference)
+  - Piercing Studio
+  - Microblading / PMU
+  - Aesthetics Clinic (non-surgical cosmetic)
+  - Barber / Hairdresser
+- [x] Enhanced data model with:
+  - COMPLIANCE_AREAS (20 areas)
+  - RISK_ASSESSMENTS (20 types)
+  - AUDITS_CHECKS (18 types)
+  - REGULATORY_BODIES (17 bodies)
+  - PLATFORM_DISCLAIMERS
+- [x] Each industry modal now displays:
+  - Overview description
+  - "Who is this for?" list
+  - Regulatory Bodies (with external links)
+  - Compliance Areas Covered (tags)
+  - Required Risk Assessments
+  - Audits & Ongoing Checks
+  - Example Documents & Templates
+  - Practical Requirements
+  - Regional Variations note (where applicable)
+  - Industry-specific Disclaimer
+  - Platform Disclaimer
+- [x] Footer disclaimer on landing page
+- [x] Signup page disclaimer
+
+## Supported Industries (30 total)
+
+### Personal & Body Art Services (5) - NEW
+- Tattoo Artist / Studio (Local Authority, HSE, ICO)
+- Piercing Studio (Local Authority, HSE, ICO)
+- Microblading / PMU (Local Authority, HSE, ICO)
+- Aesthetics Clinic (Local Authority, HSE, ICO, JCCP)
+- Barber / Hairdresser (Local Authority, HSE, ICO)
+
+### Personal & Wellbeing Services (5)
+- Massage Therapist (Local Authority, HSE, ICO)
+- Beauty Therapist (Local Authority, HSE, ICO)
+- Nail Technician (Local Authority, HSE, ICO)
+- Holistic Therapist (Local Authority, HSE, ICO)
+- Yoga / Pilates Instructor (HSE, ICO)
 
 ### Healthcare (5)
 - Dental Practice (CQC, GDC, HSE, ICO)
@@ -75,36 +104,39 @@ Create a UK-based SaaS web platform called SimplyComply that allows UK businesse
 - Plumbing & Heating (HSE, Gas Safe)
 
 ### Hospitality (3)
-- Hotel & Hospitality (EHO, HSE)
-- Restaurant & Café (EHO, FSA)
-- Takeaway & Fast Food (EHO, FSA)
+- Hotel & Hospitality (Local Authority, HSE, ICO)
+- Restaurant & Café (Local Authority, FSA, HSE)
+- Takeaway & Fast Food (Local Authority, FSA, HSE)
 
 ### Retail (1)
-- Retail Shop (Trading Standards, HSE)
+- Retail Shop (Trading Standards, HSE, ICO)
 
-### Personal & Wellbeing Services (6)
-- Massage Therapist (EHO, HSE, ICO)
-- Beauty Therapist (EHO)
-- Nail Technician (EHO)
-- Holistic Therapist (EHO, ICO)
-- Yoga/Pilates Instructor (HSE, ICO)
-- Home-based Personal Services (EHO, HSE)
+### Services (2)
+- Cleaning Services (HSE, ICO)
+- Security Services (SIA, HSE, ICO)
+
+### Leisure (1)
+- Gym & Fitness (HSE, ICO)
 
 ### Professional Services (1)
 - Office & Professional Services (HSE, ICO)
 
-### Services (2)
-- Cleaning Services (HSE)
-- Security Services (SIA, HSE)
-
-### Leisure (1)
-- Gym & Fitness (HSE)
-
 ### Third Sector (1)
-- Charity & Non-Profit (Charity Commission, ICO)
+- Charity & Non-Profit (Charity Commission, HSE, ICO)
 
 ### Automotive (1)
-- Motor Trade & Garage (Trading Standards, HSE)
+- Motor Trade & Garage (Trading Standards, HSE, ICO)
+
+## Platform Disclaimers
+
+**Industry Modal:**
+> SimplyComply provides guidance, templates, and supporting documentation. Responsibility for ensuring compliance remains with the business owner and may vary by location and services offered.
+
+**Signup & Footer:**
+> Requirements can vary by local authority and UK nation. SimplyComply assists with compliance documentation but does not guarantee regulatory approval or inspection outcomes.
+
+**Regional Note (shown where applicable):**
+> Requirements may vary by local authority and UK nation (England, Wales, Scotland, Northern Ireland).
 
 ## P0/P1/P2 Features Remaining
 
@@ -144,3 +176,5 @@ Create a UK-based SaaS web platform called SimplyComply that allows UK businesse
 - MongoDB collections: users, businesses, checklists, employees, employee_requirements, notifications, payment_transactions
 - Employee requirements auto-calculate status based on expiry dates
 - 30-day warning window for "expiring soon" status
+- Industries data is centralized in `/app/frontend/src/data/industries.js` - single source of truth
+- New helper functions: `getRiskAssessmentsForIndustry()`, `getAuditsChecksForIndustry()`
