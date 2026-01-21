@@ -24,9 +24,15 @@ Create a UK-based SaaS web platform called SimplyComply that allows UK businesse
 ### Phase 1 - MVP (Completed)
 - [x] User signup/login with JWT authentication
 - [x] Business profile setup with industry/sector selection
-- [x] **21 UK industries** with proper regulators (CQC, RCVS, HSE, Ofsted, SIA, etc.)
-- [x] **Single source of truth** for industries data (shared between homepage and signup)
-- [x] Industry detail modals with regulatory bodies, compliance areas, and example documents
+- [x] **26 UK industries** with proper regulators (CQC, RCVS, HSE, Ofsted, SIA, etc.)
+- [x] **Single source of truth** for industries data (`/app/frontend/src/data/industries.js`)
+- [x] Comprehensive industry detail modals with:
+  - Full descriptions and "Who is this for?" lists
+  - Regulatory bodies (with full names, descriptions, and external links)
+  - Compliance areas covered (Health & Safety, GDPR, Safeguarding, etc.)
+  - Example documents and templates
+  - Industry-specific disclaimers
+- [x] "View all industries" modal grouped by category
 - [x] Industry pre-selection via URL params (/signup?industry=dental)
 - [x] Auto-generated compliance checklist per sector
 - [x] Document library with category filtering
