@@ -808,6 +808,9 @@ async def create_business(business_data: BusinessCreate, current_user: dict = De
     
     await generate_compliance_checklist(business_id, business_data.sector)
     
+    # Generate compliance items for the new compliance score system
+    await generate_business_compliance_items(business_id, business_data.sector)
+    
     return BusinessResponse(**{k: v for k, v in business.items() if k != "_id"})
 
 @api_router.get("/business", response_model=Optional[BusinessResponse])
