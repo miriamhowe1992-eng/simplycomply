@@ -837,8 +837,19 @@ async def update_business(business_data: BusinessCreate, current_user: dict = De
     }
     
     if business["sector"] != business_data.sector:
+        # Delete old checklist items
         await db.checklists.delete_many({"business_id": business["id"]})
         await generate_compliance_checklist(business["id"], business_data.sector)
+        
+        # Archive old compliance items (don't delete - keep history)
+        await db.compliance_items.update_many(
+            {"business_id": business["id"]},
+            {"$set": {"archived": True, "archived_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        # Generate new compliance items for new industry
+        await generate_business_compliance_items(business["id"], business_data.sector)
+        # Recalculate score
+        await calculate_compliance_score(business["id"])
     
     await db.businesses.update_one({"id": business["id"]}, {"$set": update_data})
     updated = await db.businesses.find_one({"id": business["id"]}, {"_id": 0})
