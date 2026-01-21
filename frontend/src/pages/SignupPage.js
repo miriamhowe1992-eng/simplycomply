@@ -152,6 +152,10 @@ export default function SignupPage() {
             By signing up, you agree to our Terms of Service and Privacy Policy.
           </p>
           
+          <p className="text-xs text-slate-400 mt-3 text-center leading-relaxed">
+            Requirements can vary by local authority and UK nation. SimplyComply assists with compliance documentation but does not guarantee regulatory approval or inspection outcomes.
+          </p>
+          
           <p className="text-center text-slate-600 mt-6">
             Already have an account?{" "}
             <Link to="/login" className="text-teal-600 hover:text-teal-700 font-medium">
