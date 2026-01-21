@@ -118,6 +118,75 @@ class CheckoutRequest(BaseModel):
     plan: str
     origin_url: str
 
+# ======================= COMPLIANCE ITEM MODELS =======================
+
+class ComplianceItemType(str, Enum):
+    POLICY = "policy"
+    PROCEDURE = "procedure"
+    RISK_ASSESSMENT = "risk_assessment"
+    AUDIT = "audit"
+    POSTER = "poster"
+    TEMPLATE = "template"
+    OPERATIONAL = "operational"
+
+class ComplianceItemStatus(str, Enum):
+    MISSING = "missing"
+    DRAFT = "draft"
+    UPLOADED = "uploaded"
+    ACKNOWLEDGED = "acknowledged"
+    APPROVED = "approved"
+    NEEDS_REVIEW = "needs_review"
+    OVERDUE = "overdue"
+
+class ComplianceItemUpdate(BaseModel):
+    status: Optional[str] = None
+    is_acknowledged: Optional[bool] = None
+    is_customised: Optional[bool] = None
+    custom_content: Optional[str] = None
+    file_url: Optional[str] = None
+    file_name: Optional[str] = None
+    notes: Optional[str] = None
+
+class ComplianceItemResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    business_id: str
+    item_type: str
+    item_key: str
+    title: str
+    description: Optional[str]
+    category: str
+    is_required: bool
+    status: str
+    is_acknowledged: bool
+    acknowledged_at: Optional[str]
+    is_customised: bool
+    custom_content: Optional[str]
+    file_url: Optional[str]
+    file_name: Optional[str]
+    version: Optional[str]
+    last_reviewed: Optional[str]
+    next_review_due: Optional[str]
+    notes: Optional[str]
+    created_at: str
+    updated_at: Optional[str]
+    contributes_to_score: bool
+
+class ComplianceScoreResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    business_id: str
+    industry_id: str
+    score_percent: int
+    required_total: int
+    completed_total: int
+    missing_count: int
+    overdue_count: int
+    needs_review_count: int
+    status_label: str  # "on_track", "needs_attention", "overdue"
+    last_calculated_at: str
+    next_review_due_at: Optional[str]
+    breakdown: Dict
+
 # ======================= EMPLOYEE MODELS =======================
 
 class EmployeeCreate(BaseModel):
