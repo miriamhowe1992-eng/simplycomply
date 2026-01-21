@@ -240,7 +240,7 @@ export default function LandingPage() {
                       <span className="text-2xl">{industry.icon}</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900 text-sm truncate">{industry.name}</p>
-                        <p className="text-xs text-slate-500">{industry.regulator}</p>
+                        <p className="text-xs text-slate-500">{industry.regulators?.join(", ")}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-400" />
                     </button>
