@@ -392,17 +392,24 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Shield className="w-6 h-6 text-teal-400" />
-              <span className="font-heading text-lg font-semibold text-white">SimplyComply</span>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Shield className="w-6 h-6 text-teal-400" />
+                <span className="font-heading text-lg font-semibold text-white">SimplyComply</span>
+              </div>
+              <p className="text-sm">
+                © {new Date().getFullYear()} SimplyComply. Made for UK businesses.
+              </p>
+              <div className="flex items-center gap-6 text-sm">
+                <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+              </div>
             </div>
-            <p className="text-sm">
-              © {new Date().getFullYear()} SimplyComply. Made for UK businesses.
-            </p>
-            <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <div className="border-t border-slate-800 pt-4">
+              <p className="text-xs text-slate-500 text-center max-w-3xl mx-auto">
+                Requirements can vary by local authority and UK nation. SimplyComply assists with compliance documentation but does not guarantee regulatory approval or inspection outcomes.
+              </p>
             </div>
           </div>
         </div>
