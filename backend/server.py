@@ -2057,6 +2057,9 @@ async def get_compliance_types(current_user: dict = Depends(get_current_user)):
 async def root():
     return {"message": "SimplyComply API", "version": "1.0.0"}
 
+# Include admin routes inside /api
+api_router.include_router(admin_router)
+
 # Include the router in the main app
 app.include_router(api_router)
 
