@@ -1,7 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Header
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -14,14 +13,10 @@ import bcrypt
 import jwt
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 from app.dependencies.auth import get_current_user
+from app.db import db
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
-
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
 
 # JWT Config
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'simplycomply_secret')
@@ -2080,4 +2075,5 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    from app.db import client
     client.close()
