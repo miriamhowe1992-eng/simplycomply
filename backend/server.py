@@ -13,6 +13,7 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+from app.routes.admin import router as admin_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -35,6 +36,13 @@ app = FastAPI(title="SimplyComply API")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+# ✅ Mount admin routes under /api/admin/*
+api_router.include_router(
+    admin_router,
+    prefix="/admin",
+    tags=["admin"]
+)
 
 # ======================= MODELS =======================
 
@@ -2042,39 +2050,6 @@ async def get_compliance_types(current_user: dict = Depends(get_current_user)):
         {"id": "template", "name": "Template / Form"},
         {"id": "operational", "name": "Operational Requirement"}
     ]
-
-# ======================= ADMIN ROUTES =======================
-
-async def require_admin(current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return current_user
-
-@api_router.get("/admin/users")
-async def admin_get_users(admin: dict = Depends(require_admin)):
-    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(1000)
-    return users
-
-@api_router.get("/admin/businesses")
-async def admin_get_businesses(admin: dict = Depends(require_admin)):
-    businesses = await db.businesses.find({}, {"_id": 0}).to_list(1000)
-    return businesses
-
-@api_router.get("/admin/stats")
-async def admin_get_stats(admin: dict = Depends(require_admin)):
-    total_users = await db.users.count_documents({})
-    total_businesses = await db.businesses.count_documents({})
-    active_subscriptions = await db.businesses.count_documents({"subscription_status": "active"})
-    total_transactions = await db.payment_transactions.count_documents({})
-    paid_transactions = await db.payment_transactions.count_documents({"payment_status": "paid"})
-    
-    return {
-        "total_users": total_users,
-        "total_businesses": total_businesses,
-        "active_subscriptions": active_subscriptions,
-        "total_transactions": total_transactions,
-        "paid_transactions": paid_transactions
-    }
 
 # ======================= ROOT ROUTE =======================
 
