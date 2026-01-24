@@ -4,7 +4,7 @@ import os
 import jwt
 
 # ✅ Import db from server (this is safe because server will NOT import this file at top-level anymore)
-from server import db
+from app.core.db import db
 
 JWT_SECRET = os.environ.get("JWT_SECRET_KEY", "simplycomply_secret")
 JWT_ALGORITHM = "HS256"
