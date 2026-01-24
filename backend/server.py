@@ -13,7 +13,7 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
-from app.routes.admin import router as admin_router
+from app.dependencies.auth import get_current_user
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
