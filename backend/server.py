@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Header
+from app.api.admin import admin_router
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -28,9 +29,10 @@ STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 
 # Create the main app
 app = FastAPI(title="SimplyComply API")
-
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
+app.include_router(api_router)
 
 # ✅ Include your main API routes here (example)
 # api_router.include_router(users_router, prefix="/users", tags=["users"])
