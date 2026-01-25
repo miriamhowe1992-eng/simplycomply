@@ -32,11 +32,12 @@ app = FastAPI(title="SimplyComply API")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# ✅ Mount admin routes under /api/admin/*
-api_router.include_router(
-    admin_router,
-    prefix="/admin",
-    tags=["admin"]
+# ✅ Include your main API routes here (example)
+# api_router.include_router(users_router, prefix="/users", tags=["users"])
+# api_router.include_router(companies_router, prefix="/companies", tags=["companies"])
+
+# Mount /api onto the app
+app.include_router(api_router)
 )
 
 # ======================= MODELS =======================
