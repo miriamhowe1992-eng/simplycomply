@@ -102,3 +102,5 @@ async def delete_document(doc_id: str, _: str = Depends(require_admin)):
     await db.documents.delete_one({"_id": ObjectId(doc_id)})
 
     return {"ok": True}
+from app.api.admin_documents import router as admin_docs_router
+admin_router.include_router(admin_docs_router)
