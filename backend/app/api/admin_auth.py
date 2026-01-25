@@ -10,15 +10,9 @@ JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 ADMIN_EMAIL = os.environ["ADMIN_EMAIL"]
 
-
 def create_token(email: str) -> str:
     exp = datetime.now(timezone.utc) + timedelta(hours=24)
-    return jwt.encode(
-        {"sub": email, "exp": exp},
-        JWT_SECRET_KEY,
-        algorithm=JWT_ALGORITHM,
-    )
-
+    return jwt.encode({"sub": email, "exp": exp}, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 def require_admin(token: str = Depends(oauth2)) -> str:
     try:
