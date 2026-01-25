@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import AdminLogin from "./admin/AdminLogin";
+import AdminDocuments from "./admin/AdminDocuments";
+import RequireAdmin from "./admin/RequireAdmin";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -20,6 +23,9 @@ import EmployeeDetailPage from "./pages/EmployeeDetailPage";
 
 function App() {
   return (
+{/* Fallback */}
+<Route path="*" element={<Navigate to="/" replace />} />
+
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -79,7 +85,16 @@ function App() {
               <EmployeeDetailPage />
             </ProtectedRoute>
           } />
-          
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin/documents"
+            element={
+              <RequireAdmin>
+                <AdminDocuments />
+              </RequireAdmin>
+            }
+          />
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
