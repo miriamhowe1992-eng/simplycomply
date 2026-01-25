@@ -38,7 +38,6 @@ api_router = APIRouter(prefix="/api")
 
 # Mount /api onto the app
 app.include_router(api_router)
-)
 
 # ======================= MODELS =======================
 
