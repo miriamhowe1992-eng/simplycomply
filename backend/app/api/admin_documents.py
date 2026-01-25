@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from bson import ObjectId
 
 from app.core.db import db  # adjust if your db import path differs
-from app.api.admin import require_admin  # import your existing admin guard
+from app.api.admin_auth import require_admin
 
 router = APIRouter()
 
