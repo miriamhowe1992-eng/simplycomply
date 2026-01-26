@@ -3,24 +3,27 @@ import uuid
 from datetime import datetime, timezone
 
 import boto3
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from bson import ObjectId
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from app.core.db import db  # adjust if your db import path differs
 from app.api.admin_auth import require_admin
+from app.core.db import db  # must be your motor db instance
 
 router = APIRouter()
 
 S3_BUCKET = os.environ["S3_BUCKET"]
-S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL")  # required for R2, optional for AWS
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL")  # required for Cloudflare R2
 S3_REGION = os.environ.get("S3_REGION", "auto")
+
+S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
+S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY")
 
 s3 = boto3.client(
     "s3",
     endpoint_url=S3_ENDPOINT_URL,
     region_name=S3_REGION,
-    aws_access_key_id=os.environ.get("S3_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.environ.get("S3_SECRET_ACCESS_KEY"),
+    aws_access_key_id=S3_ACCESS_KEY_ID,
+    aws_secret_access_key=S3_SECRET_ACCESS_KEY,
 )
 
 ALLOWED_TYPES = {
@@ -28,7 +31,6 @@ ALLOWED_TYPES = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # docx
     "text/plain",
 }
-
 MAX_BYTES = 20 * 1024 * 1024  # 20MB
 
 
@@ -79,7 +81,12 @@ async def list_documents(_: str = Depends(require_admin)):
 
 @router.get("/documents/{doc_id}/download")
 async def get_download_url(doc_id: str, _: str = Depends(require_admin)):
-    doc = await db.documents.find_one({"_id": ObjectId(doc_id)})
+    try:
+        oid = ObjectId(doc_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid document id")
+
+    doc = await db.documents.find_one({"_id": oid})
     if not doc:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -88,19 +95,22 @@ async def get_download_url(doc_id: str, _: str = Depends(require_admin)):
         Params={"Bucket": S3_BUCKET, "Key": doc["key"]},
         ExpiresIn=300,  # 5 minutes
     )
-
     return {"url": url}
 
 
 @router.delete("/documents/{doc_id}")
 async def delete_document(doc_id: str, _: str = Depends(require_admin)):
-    doc = await db.documents.find_one({"_id": ObjectId(doc_id)})
+    try:
+        oid = ObjectId(doc_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid document id")
+
+    doc = await db.documents.find_one({"_id": oid})
     if not doc:
         raise HTTPException(status_code=404, detail="Not found")
 
     s3.delete_object(Bucket=S3_BUCKET, Key=doc["key"])
-    await db.documents.delete_one({"_id": ObjectId(doc_id)})
+    await db.documents.delete_one({"_id": oid)
 
+    }
     return {"ok": True}
-from app.api.admin_documents import router as admin_docs_router
-admin_router.include_router(admin_docs_router)
