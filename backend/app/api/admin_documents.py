@@ -11,20 +11,21 @@ from app.api.admin_auth import require_admin
 
 router = APIRouter()
 
-# ---------- S3 / R2 config ----------
 S3_BUCKET = os.environ["S3_BUCKET"]
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL")
 S3_REGION = os.environ.get("S3_REGION", "auto")
+
+S3_ACCESS_KEY_ID = os.environ["S3_ACCESS_KEY_ID"]
+S3_SECRET_ACCESS_KEY = os.environ["S3_SECRET_ACCESS_KEY"]
 
 s3 = boto3.client(
     "s3",
     endpoint_url=S3_ENDPOINT_URL,
     region_name=S3_REGION,
-    aws_access_key_id=os.environ.get("S3_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.environ.get("S3_SECRET_ACCESS_KEY"),
+    aws_access_key_id=S3_ACCESS_KEY_ID,
+    aws_secret_access_key=S3_SECRET_ACCESS_KEY,
 )
 
-# ---------- Upload rules ----------
 ALLOWED_TYPES = {
     "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -33,8 +34,6 @@ ALLOWED_TYPES = {
 
 MAX_BYTES = 20 * 1024 * 1024  # 20MB
 
-
-# ---------- Routes ----------
 
 @router.post("/documents")
 async def upload_document(
@@ -97,7 +96,6 @@ async def get_download_url(doc_id: str, _: str = Depends(require_admin)):
         Params={"Bucket": S3_BUCKET, "Key": doc["key"]},
         ExpiresIn=300,
     )
-
     return {"url": url}
 
 
@@ -112,11 +110,6 @@ async def delete_document(doc_id: str, _: str = Depends(require_admin)):
     if not doc:
         raise HTTPException(status_code=404, detail="Not found")
 
-    s3.delete_object(
-        Bucket=S3_BUCKET,
-        Key=doc["key"],
-    )
-
+    s3.delete_object(Bucket=S3_BUCKET, Key=doc["key"])
     await db.documents.delete_one({"_id": oid})
-
     return {"ok": True}
