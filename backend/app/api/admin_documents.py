@@ -110,5 +110,5 @@ async def delete_document(doc_id: str, _: str = Depends(require_admin)):
         raise HTTPException(status_code=404, detail="Not found")
 
     s3.delete_object(Bucket=S3_BUCKET, Key=doc["key"])
-    await db.documents.delete_one({"_id": oid)}
+    await db.documents.delete_one({"_id": oid})
     return {"ok": True}
